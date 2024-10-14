@@ -17,8 +17,8 @@ const geistMono = localFont({
 });
 
 export const metadata = {
-  title: "Donor CRM",
-  description: "Donor CRM Powered by Gracix",
+  title: "MIM Donor CRM",
+  description: "MIM Donor Management System",
 };
 
 export default function RootLayout({ children }) {
