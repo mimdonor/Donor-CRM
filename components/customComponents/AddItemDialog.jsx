@@ -132,7 +132,7 @@ const AddItemDialog = ({ isOpen, onClose, onAdd, table }) => {
                   </SelectTrigger>
                   <SelectContent>
                     {organizations.map((org) => (
-                      <SelectItem key={org.id} value={org.id.toString()}>{org.name}</SelectItem>
+                      <SelectItem key={org.id} value={org.name.toString()}>{org.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

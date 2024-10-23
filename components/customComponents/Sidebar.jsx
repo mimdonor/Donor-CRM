@@ -92,7 +92,7 @@ export default function Sidebar() {
           <Link href="/dashboard" className={cn("flex items-center", expanded ? "" : "justify-center")}>
             <Image
               src={Logo}
-              alt="Gracix Logo"
+              alt="MIM Logo"
               width={50}
               height={50}
               className={cn("cursor-pointer", expanded ? "mr-2" : "")}
