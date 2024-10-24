@@ -14,7 +14,7 @@ import { PhoneInput } from 'react-international-phone';
 import 'react-international-phone/style.css';
 import { Country, State, City } from 'country-state-city';
 
-const supabaseStorage = createClient("https://rwbjxsjojmtjbpxqnwqu.supabase.co/", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3Ymp4c2pvam10amJweHFud3F1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyNTYxNDU2NiwiZXhwIjoyMDQxMTkwNTY2fQ.3ZdesMfujSAODuzF9fsOVoXwDy9lnnE4NpzUL2UQek0");
+const supabaseStorage = createClient("https://ctmihnkvxjdkkyryphvm.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0bWlobmt2eGpka2t5cnlwaHZtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyOTczOTM4OSwiZXhwIjoyMDQ1MzE1Mzg5fQ.4vF0dsyyIfvmW0iMRm3spiAwAQ-NFrL0okXpzUVOaKA");
 
 const AdminSettings = () => {
   const [organizations, setOrganizations] = useState([]);

@@ -77,10 +77,10 @@ const  BarChart = ({ data, title, description }) =>  {
             </RechartsBarChart>
           </ResponsiveContainer>
         </ChartContainer>
-        <div className="mt-4 text-center">
+        {/* <div className="mt-4 text-center">
           <p className="text-2xl font-bold">₹{totalDonations.toFixed(2)}</p>
           <p className="text-sm text-muted-foreground">Total Donations</p>
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   )
