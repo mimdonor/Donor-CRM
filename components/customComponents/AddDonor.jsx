@@ -111,6 +111,11 @@ export default function AddDonor({ donorId }) {
       const newId = 'G' + (parseInt(lastId.slice(1)) + 1).toString().padStart(2, '0');
       setLastDonorId(newId);
     }
+    else {
+      // If there are no donors in the database, start from 1
+      const newId = 'G01';
+      setLastDonorId(newId);
+    }
   };
 
   const fetchDonorData = async () => {
