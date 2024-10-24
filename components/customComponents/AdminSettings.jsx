@@ -30,6 +30,7 @@ const AdminSettings = () => {
     fetchOrganizations();
   }, []);
 
+  
   useEffect(() => {
     if (organizations.length > 0 && !selectedOrg) {
       handleOrgChange(organizations[0].id);
