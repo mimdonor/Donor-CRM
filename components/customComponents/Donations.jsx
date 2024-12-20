@@ -265,7 +265,7 @@ const Donations = () => {
           </DialogContent>
         </Dialog>
         <Dialog open={isPrintModalOpen} onOpenChange={setIsPrintModalOpen}>
-          <DialogContent>
+          <DialogContent className="text-black">
             <DialogHeader>
               <DialogTitle>Send Receipt</DialogTitle>
               <DialogDescription>Select the donor and upload the receipt to send</DialogDescription>
