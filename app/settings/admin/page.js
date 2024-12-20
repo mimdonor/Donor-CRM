@@ -1,5 +1,5 @@
 
-import AdminSettings from "@/components/customComponents/AdminSettings";
+import AdminSettings from "@/components/customComponents/Admin/AdminSettings";
 
 const AdminPage = () => {
   return (

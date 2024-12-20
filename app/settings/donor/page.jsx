@@ -8,8 +8,7 @@ const DonorSettings = () => {
   const settingsCategories = [
     { title: "Donor Source", table: "donorsource_dropdown" },
     { title: "Donor Zone", table: "donorzone_dropdown" },
-    { title: "Representatives", table: "representatives_dropdown" },
-    { title: "Categories", table: "categories_dropdown" },
+    { title: "Representatives", table: "representatives_dropdown" }
   ];
 
   return (

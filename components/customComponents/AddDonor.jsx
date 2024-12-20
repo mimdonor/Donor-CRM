@@ -12,6 +12,7 @@ import 'react-international-phone/style.css';
 import { useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const donorTypes = [
   { id: 1, name: 'Individual' },
@@ -151,6 +152,7 @@ export default function AddDonor({ donorId }) {
         purposes: data.purposes ? data.purposes.slice(1, -1).split(',') : [], // Parse Postgres array
         commitment: data.commitment,
         panNumber: data.pan_number,
+        isMagazineSubscribed: data.is_magazine_subscribed,
       };
 
       console.log('Form data to be set:', formData);
@@ -193,6 +195,7 @@ export default function AddDonor({ donorId }) {
       purposes: data.purposes ? `{${data.purposes.join(',')}}` : null, // Format as Postgres array
       commitment: data.commitment ? parseFloat(data.commitment) : null,
       pan_number: data.panNumber,
+      is_magazine_subscribed: data.isMagazineSubscribed || false,
     };
 
     // Concatenate contact person title and name for institutions
@@ -503,7 +506,7 @@ export default function AddDonor({ donorId }) {
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-4">Additional Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid items-center grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="panNumber">PAN Number</Label>
                   <Input id="panNumber" {...register("panNumber")} />
@@ -519,6 +522,28 @@ export default function AddDonor({ donorId }) {
                     {errors.commitment && <p className="text-red-500 text-sm">{errors.commitment.message}</p>}
                   </div>
                 )}
+                <div className="space-y-2 flex items-center md:col-span-2">
+                  <div className="flex items-center space-x-2 h-10">
+                    <Controller
+                      name="isMagazineSubscribed"
+                      control={control}
+                      render={({ field }) => (
+                        <Checkbox
+                          id="isMagazineSubscribed"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="w-5 h-5"
+                        />
+                      )}
+                    />
+                    <Label
+                      htmlFor="isMagazineSubscribed"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Subscribe to Magazine
+                    </Label>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

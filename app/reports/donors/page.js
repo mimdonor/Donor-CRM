@@ -60,7 +60,7 @@ const Page = () => {
     const columns = [
         {header: 'Donor ID', accessorKey: 'id'},
         {header: 'Donor Number', accessorKey: 'donor_number'},
-        {header: 'Donor Name', accessorFn: (row) => `${row.first_name} ${row.last_name}`},
+        {header: 'Donor Name', accessorFn: (row) => `${row.donor_name}`},
         {header: 'Phone', accessorKey: 'phone'},
         {header: 'Donor Type', accessorKey: 'donor_type'},
         {header: 'Category', accessorKey: 'category'},

@@ -23,92 +23,95 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import ImportExcelModal from './ImportExcelModal';
-import { Checkbox } from "@/components/ui/checkbox";
 
-export default function Donor() {
+export default function Representatives() {
   const router = useRouter();
-  const [donors, setDonors] = useState([]);
+  const [representatives, setRepresentatives] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [donorToDelete, setDonorToDelete] = useState(null);
+  const [representativeToDelete, setRepresentativeToDelete] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("active");
   const [visibleColumns, setVisibleColumns] = useState({
-    donor_number: true,
-    donor_name: true,
+    representative_name: true,
+    representative_number: true,
     phone: true,
-    donor_source: true,
-    representative: true,
-    donor_zone: true,
-    donor_type: true
+    door_no: true,
+    street_name: true,
+    area_name: true,
+    landmark: true,
+    city: true,
+    state: true,
+    country: true,
+    pincode: true,
+    representative_type: true,
   });
 
   useEffect(() => {
-    fetchDonors();
-  }, [activeTab]); // Refetch when tab changes
+    fetchRepresentatives();
+  }, [activeTab]);
 
-  const handleView = useCallback((donor) => {
-    router.push(`/donor/view/${donor.id}`);
+  const handleView = useCallback((representative) => {
+    router.push(`/representative/view/${representative.id}`);
   }, [router]);
 
-  const handleEdit = useCallback((donor) => {
-    router.push(`/donor/editDonor/${donor.id}`);
+  const handleEdit = useCallback((representative) => {
+    router.push(`/representative/editRepresentative/${representative.id}`);
   }, [router]);
 
-  const handleDisableClick = useCallback((donor) => {
-    setDonorToDelete(donor);
+  const handleDisableClick = useCallback((representative) => {
+    setRepresentativeToDelete(representative);
     setIsDeleteDialogOpen(true);
   }, []);
 
   const handleDisableConfirm = useCallback(async () => {
-    if (donorToDelete) {
+    if (representativeToDelete) {
       try {
         const { error } = await supabase
-          .from('donors')
-          .update({ isDisabled: !donorToDelete.isDisabled })
-          .eq('id', donorToDelete.id);
+          .from('representatives')
+          .update({ 
+            isDisabled: !representativeToDelete.isDisabled
+          })
+          .eq('id', representativeToDelete.id);
 
         if (error) throw error;
 
-        fetchDonors(); // Refresh the list
+        fetchRepresentatives();
         setIsDeleteDialogOpen(false);
-        setDonorToDelete(null);
+        setRepresentativeToDelete(null);
       } catch (error) {
-        console.error("Error updating donor status:", error);
+        console.error("Error updating representative status:", error);
       }
     }
-  }, [donorToDelete]);
+  }, [representativeToDelete]);
 
   const handleDisableCancel = useCallback(() => {
     setIsDeleteDialogOpen(false);
-    setDonorToDelete(null);
+    setRepresentativeToDelete(null);
   }, []);
 
   const handleImportSuccess = useCallback(() => {
-    fetchDonors();
+    fetchRepresentatives();
     setIsImportModalOpen(false);
   }, []);
 
-  const handlePrint = useCallback((donor) => {
-    router.push(`/donor/print/${donor.id}`);
+  const handlePrint = useCallback((representative) => {
+    router.push(`/representative/print/${representative.id}`);
   }, [router]);
 
   const allColumns = [
-    { header: "Donor ID", accessorKey: "donor_number" },
-    { header: "Donor Name", accessorKey: "donor_name" },
+    { header: "Representative Name", accessorKey: "representative_name" },
+    { header: "Representative ID", accessorKey: "representative_number" },
     { header: "Mobile Number", accessorKey: "phone" },
+    { header: "Door No", accessorKey: "door_no" },
     { header: "Street Name", accessorKey: "street_name" },
     { header: "Area Name", accessorKey: "area_name" },
     { header: "Landmark", accessorKey: "landmark" },
-    { header: "City / District", accessorKey: "city" },
+    { header: "City", accessorKey: "city" },
     { header: "State", accessorKey: "state" },
     { header: "Country", accessorKey: "country" },
     { header: "Pincode", accessorKey: "pincode" },
-    { header: "Donor Source", accessorKey: "donor_source" },
-    { header: "In charge / Representative", accessorKey: "representative" },
-    { header: "Donor Zone", accessorKey: "donor_zone" },
-    { header: "Donor Type", accessorKey: "donor_type" },
-    { header: "Pan Number", accessorKey: "pan_number" },
+    { header: "Representative Type", accessorKey: "representative_type" },
   ];
 
   const columns = [
@@ -116,7 +119,7 @@ export default function Donor() {
     {
       id: "actions",
       cell: ({ row }) => {
-        const donor = row.original;
+        const representative = row.original;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -126,21 +129,21 @@ export default function Donor() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleView(donor)}>
+              <DropdownMenuItem onClick={() => handleView(representative)}>
                 <Eye className="mr-2 h-4 w-4" />
                 <span>View</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleEdit(donor)}>
+              <DropdownMenuItem onClick={() => handleEdit(representative)}>
                 <Edit className="mr-2 h-4 w-4" />
                 <span>Edit</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePrint(donor)}>
+              <DropdownMenuItem onClick={() => handlePrint(representative)}>
                 <Printer className="mr-2 h-4 w-4" />
                 <span>Print</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDisableClick(donor)}>
+              <DropdownMenuItem onClick={() => handleDisableClick(representative)}>
                 <Ban className="mr-2 h-4 w-4" />
-                <span>{donor.isDisabled ? 'Enable Donor' : 'Disable Donor'}</span>
+                <span>{representative.isDisabled ? 'Enable Representative' : 'Disable Representative'}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -170,11 +173,11 @@ export default function Donor() {
     </DropdownMenu>
   );
 
-  async function fetchDonors() {
+  async function fetchRepresentatives() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('donors')
+        .from('representatives')
         .select('*')
         .eq('isDisabled', activeTab === 'inactive');
 
@@ -182,14 +185,14 @@ export default function Donor() {
         throw error;
       }
 
-      const transformedData = data.map(donor => ({
-        ...donor,
-        donor_name: `${donor.donor_name}`,
+      const transformedData = data.map(representative => ({
+        ...representative,
+        representative_name: `${representative.representative_name}`,
       }));
 
-      setDonors(transformedData);
+      setRepresentatives(transformedData);
     } catch (error) {
-      console.error('Error fetching donors:', error);
+      console.error('Error fetching representatives:', error);
     } finally {
       setLoading(false);
     }
@@ -198,14 +201,14 @@ export default function Donor() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold">Donors List</h2>
+        <h2 className="text-3xl font-bold">Representatives List</h2>
       </div>
 
       <Tabs defaultValue="active" value={activeTab} onValueChange={setActiveTab}>
         <div className="flex justify-between items-center mb-4">
           <TabsList>
-            <TabsTrigger value="active">Active Donors</TabsTrigger>
-            <TabsTrigger value="inactive">Inactive Donors</TabsTrigger>
+            <TabsTrigger value="active">Active Representatives</TabsTrigger>
+            <TabsTrigger value="inactive">Inactive Representatives</TabsTrigger>
           </TabsList>
 
           <div className="flex space-x-2">
@@ -213,11 +216,11 @@ export default function Donor() {
               className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]" 
               onClick={() => setIsImportModalOpen(true)}
             >
-              Import Donor
+              Import Representative
             </Button>
-            <Link href="/donor/addDonor">
+            <Link href="/representative/addRepresentative">
               <Button className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]">
-                Add Donor
+                Add Representative
               </Button>
             </Link>
             <ColumnToggle />
@@ -229,9 +232,9 @@ export default function Donor() {
             <CardContent>
               <PaginatedTable
                 columns={columns}
-                data={donors}
+                data={representatives}
                 isColumnButton={false}
-                searchText="Search donors..."
+                searchText="Search representatives..."
               />
             </CardContent>
           </Card>
@@ -242,9 +245,9 @@ export default function Donor() {
             <CardContent>
               <PaginatedTable
                 columns={columns}
-                data={donors}
+                data={representatives}
                 isColumnButton={false}
-                searchText="Search donors..."
+                searchText="Search representatives..."
               />
             </CardContent>
           </Card>
@@ -255,20 +258,20 @@ export default function Donor() {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImportSuccess={handleImportSuccess}
-        tableName="donors"
+        tableName="representatives"
       />
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-black">Confirm {donorToDelete?.isDisabled ? 'Enable' : 'Disable'}</DialogTitle>
+            <DialogTitle className="text-black">Confirm {representativeToDelete?.isDisabled ? 'Enable' : 'Disable'}</DialogTitle>
             <DialogDescription className="text-black">
-              Are you sure you want to {donorToDelete?.isDisabled ? 'enable' : 'disable'} donor {donorToDelete?.donor_name}?
+              Are you sure you want to {representativeToDelete?.isDisabled ? 'enable' : 'disable'} representative {representativeToDelete?.representative_name}?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button className="text-black" variant="outline" onClick={handleDisableCancel}>Cancel</Button>
             <Button variant="destructive" onClick={handleDisableConfirm}>
-              {donorToDelete?.isDisabled ? 'Enable' : 'Disable'}
+              {representativeToDelete?.isDisabled ? 'Enable' : 'Disable'}
             </Button>
           </DialogFooter>
         </DialogContent>

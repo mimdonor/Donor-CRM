@@ -16,7 +16,7 @@ import { Country, State, City } from 'country-state-city';
 
 const supabaseStorage = createClient("https://ctmihnkvxjdkkyryphvm.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0bWlobmt2eGpka2t5cnlwaHZtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyOTczOTM4OSwiZXhwIjoyMDQ1MzE1Mzg5fQ.4vF0dsyyIfvmW0iMRm3spiAwAQ-NFrL0okXpzUVOaKA");
 
-const AdminSettings = () => {
+const OrganizationSettings = () => {
   const [organizations, setOrganizations] = useState([]);
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -295,4 +295,4 @@ const AdminSettings = () => {
   );
 };
 
-export default AdminSettings;
+export default OrganizationSettings;
