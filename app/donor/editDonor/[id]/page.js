@@ -5,5 +5,9 @@ import AddDonor from '@/components/customComponents/AddDonor';
 export default function EditDonor() {
   const { id } = useParams();
 
-  return <AddDonor donorId={id} />;
+  return (
+  <div className="p-6">
+  <AddDonor donorId={id} />
+  </div>
+  );
 }

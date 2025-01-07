@@ -26,7 +26,7 @@ import {
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
-  { icon: User, label: 'Donor', href: '/donor' },
+  { icon: User, label: 'Donors', href: '/donor' },
   { icon: IndianRupee, label: 'Donations', href: '/donations' },
   { 
     icon: FileText, 
@@ -43,7 +43,7 @@ const menuItems = [
     label: 'Settings', 
     href: '/settings',
     submodules: [
-      { label: 'Donor', href: '/settings/donor' },
+      { label: 'Donors', href: '/settings/donor' },
       { label: 'Donations', href: '/settings/donations' },
       { label: 'Admin', href: '/settings/admin' },
     ]

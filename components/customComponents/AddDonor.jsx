@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Country, State, City } from 'country-state-city';
 
 const donorTypes = [
   { id: 1, name: 'Individual' },
@@ -45,6 +46,9 @@ export default function AddDonor({ donorId }) {
   const [lastDonorId, setLastDonorId] = useState('G00');
   const [donorNumber, setDonorNumber] = useState('')
   const [isDropdownsLoaded, setIsDropdownsLoaded] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState(null);
+  const [selectedState, setSelectedState] = useState(null);
+  const [selectedCity, setSelectedCity] = useState(null);
 
   useEffect(() => {
     fetchDropdownOptions();
@@ -129,12 +133,13 @@ export default function AddDonor({ donorId }) {
     if (error) {
       console.error('Error fetching donor data:', error);
     } else {
-      setDonorNumber(data.donor_number)
+      setDonorNumber(data.donor_number);
       console.log('Fetched donor data:', data);
 
       const formData = {
         donorNumber: data.donor_number,
-        donor_name: `${data.first_name} ${data.last_name}`,
+        firstName: data.donor_name.split(' ')[0],
+        lastName: data.donor_name.split(' ')[1] || '',
         institutionName: data.institution_name,
         phone: data.phone,
         streetName: data.street_name,
@@ -149,15 +154,24 @@ export default function AddDonor({ donorId }) {
         donorZone: data.donor_zone,
         donorType: data.donor_type,
         category: data.category,
-        purposes: data.purposes ? data.purposes.slice(1, -1).split(',') : [], // Parse Postgres array
+        purposes: Array.isArray(data.purposes) ? data.purposes : data.purposes ? data.purposes.slice(1, -1).split(',') : [], // Parse Postgres array
         commitment: data.commitment,
         panNumber: data.pan_number,
         isMagazineSubscribed: data.is_magazine_subscribed,
+        contactPersonTitle: data.contact_person?.split(' ')[0] || '',
+        contactPersonName: data.contact_person?.split(' ').slice(1).join(' ') || '',
       };
 
       console.log('Form data to be set:', formData);
 
       reset(formData);
+
+      // Set selected country, state, and city
+      const country = Country.getAllCountries().find(c => c.name === data.country);
+      const state = State.getStatesOfCountry(country?.isoCode).find(s => s.name === data.state);
+      setSelectedCountry(country);
+      setSelectedState(state);
+      setSelectedCity(data.city);
 
       // Force update of controlled inputs
       Object.keys(formData).forEach(key => {
@@ -171,6 +185,30 @@ export default function AddDonor({ donorId }) {
     }
   };
 
+  const handleCountryChange = (countryCode) => {
+    const country = Country.getCountryByCode(countryCode);
+    if (country) {
+      setSelectedCountry(country);
+      setSelectedState(null);
+      setSelectedCity(null);
+      setValue('country', country.name, { shouldValidate: true });
+    }
+  };
+
+  const handleStateChange = (stateCode) => {
+    const state = State.getStateByCodeAndCountry(stateCode, selectedCountry.isoCode);
+    if (state) {
+      setSelectedState(state);
+      setSelectedCity(null);
+      setValue('state', state.name, { shouldValidate: true });
+    }
+  };
+
+  const handleCityChange = (cityName) => {
+    setSelectedCity(cityName);
+    setValue('city', cityName, { shouldValidate: true });
+  };
+
   const onSubmit = async (data) => {
     const selectedZone = dropdownOptions.donorZones.find(zone => zone.name === data.donorZone);
     const donorData = {
@@ -181,9 +219,9 @@ export default function AddDonor({ donorId }) {
       street_name: data.streetName,
       area_name: data.areaName,
       landmark: data.landmark,
-      city: data.city,
-      state: data.state,
-      country: data.country,
+      city: selectedCity,
+      state: selectedState.name,
+      country: selectedCountry.name,
       pincode: Number(data.pincode),
       donor_source: data.donorSource,
       representative: data.representative,
@@ -475,6 +513,78 @@ export default function AddDonor({ donorId }) {
                   {errors.phone && <p className="text-red-500 text-sm">{errors.phone.message}</p>}
                 </div>
                 <div className="space-y-2">
+                  <RequiredLabel htmlFor="country">Country</RequiredLabel>
+                  <Controller
+                    name="country"
+                    control={control}
+                    rules={{ required: "Country is required" }}
+                    render={({ field }) => (
+                      <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        handleCountryChange(value);
+                      }} value={selectedCountry?.isoCode}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Country.getAllCountries().map((country) => (
+                            <SelectItem key={country.isoCode} value={country.isoCode}>{country.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.country && <p className="text-red-500 text-sm">{errors.country.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <RequiredLabel htmlFor="state">State</RequiredLabel>
+                  <Controller
+                    name="state"
+                    control={control}
+                    rules={{ required: "State is required" }}
+                    render={({ field }) => (
+                      <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        handleStateChange(value);
+                      }} value={selectedState?.isoCode} disabled={!selectedCountry}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select State" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {selectedCountry && State.getStatesOfCountry(selectedCountry.isoCode).map((state) => (
+                            <SelectItem key={state.isoCode} value={state.isoCode}>{state.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.state && <p className="text-red-500 text-sm">{errors.state.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <RequiredLabel htmlFor="city">City</RequiredLabel>
+                  <Controller
+                    name="city"
+                    control={control}
+                    rules={{ required: "City is required" }}
+                    render={({ field }) => (
+                      <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        handleCityChange(value);
+                      }} value={selectedCity} disabled={!selectedState}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select City" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {selectedState && City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode).map((city) => (
+                            <SelectItem key={city.name} value={city.name}>{city.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.city && <p className="text-red-500 text-sm">{errors.city.message}</p>}
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="streetName">Street Name</Label>
                   <Input id="streetName" {...register("streetName")} />
                 </div>
@@ -485,18 +595,6 @@ export default function AddDonor({ donorId }) {
                 <div className="space-y-2">
                   <Label htmlFor="landmark">Landmark</Label>
                   <Input id="landmark" {...register("landmark")} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="city">City / District</Label>
-                  <Input id="city" {...register("city")} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="state">State</Label>
-                  <Input id="state" {...register("state")} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="country">Country</Label>
-                  <Input id="country" {...register("country")} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pincode">Pincode</Label>

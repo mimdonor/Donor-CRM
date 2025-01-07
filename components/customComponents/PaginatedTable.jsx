@@ -11,6 +11,8 @@ import {
 } from "@tanstack/react-table";
 import {
   ChevronDown,
+  ChevronFirst,
+  ChevronLast,
   ChevronLeftIcon,
   ChevronRightIcon,
   Download,
@@ -226,7 +228,7 @@ export default function PaginatedTable({ data, columns, isColumnButton, searchTe
               disabled={!table.getCanPreviousPage()}
             >
               <span className="sr-only">Go to first page</span>
-              <ChevronLeftIcon className="h-4 w-4" />
+              <ChevronFirst className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
@@ -253,7 +255,7 @@ export default function PaginatedTable({ data, columns, isColumnButton, searchTe
               disabled={!table.getCanNextPage()}
             >
               <span className="sr-only">Go to last page</span>
-              <ChevronRightIcon className="h-4 w-4" />
+              <ChevronLast className="h-4 w-4" />
             </Button>
           </div>
         </div>

@@ -63,21 +63,46 @@ export default function Donor() {
   const handleDisableConfirm = useCallback(async () => {
     if (donorToDelete) {
       try {
-        const { error } = await supabase
-          .from('donors')
-          .update({ isDisabled: !donorToDelete.isDisabled })
-          .eq('id', donorToDelete.id);
+        if (activeTab === 'active') {
+          // Insert donor into deleted_donors table
+          const { error: insertError } = await supabase
+            .from('deleted_donors')
+            .insert(donorToDelete);
 
-        if (error) throw error;
+          if (insertError) throw insertError;
+
+          // Delete donor from donors table
+          const { error: deleteError } = await supabase
+            .from('donors')
+            .delete()
+            .eq('id', donorToDelete.id);
+
+          if (deleteError) throw deleteError;
+        } else {
+          // Insert donor back into donors table
+          const { error: insertError } = await supabase
+            .from('donors')
+            .insert(donorToDelete);
+
+          if (insertError) throw insertError;
+
+          // Delete donor from deleted_donors table
+          const { error: deleteError } = await supabase
+            .from('deleted_donors')
+            .delete()
+            .eq('id', donorToDelete.id);
+
+          if (deleteError) throw deleteError;
+        }
 
         fetchDonors(); // Refresh the list
         setIsDeleteDialogOpen(false);
         setDonorToDelete(null);
       } catch (error) {
-        console.error("Error updating donor status:", error);
+        console.error("Error moving donor:", error);
       }
     }
-  }, [donorToDelete]);
+  }, [donorToDelete, activeTab]);
 
   const handleDisableCancel = useCallback(() => {
     setIsDeleteDialogOpen(false);
@@ -138,10 +163,18 @@ export default function Donor() {
                 <Printer className="mr-2 h-4 w-4" />
                 <span>Print</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDisableClick(donor)}>
-                <Ban className="mr-2 h-4 w-4" />
-                <span>{donor.isDisabled ? 'Enable Donor' : 'Disable Donor'}</span>
-              </DropdownMenuItem>
+              {activeTab === 'active' && (
+                <DropdownMenuItem onClick={() => handleDisableClick(donor)}>
+                  <Ban className="mr-2 h-4 w-4" />
+                  <span>Disable Donor</span>
+                </DropdownMenuItem>
+              )}
+              {activeTab === 'inactive' && (
+                <DropdownMenuItem onClick={() => handleDisableClick(donor)}>
+                  <Ban className="mr-2 h-4 w-4" />
+                  <span>Enable Donor</span>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -173,10 +206,10 @@ export default function Donor() {
   async function fetchDonors() {
     try {
       setLoading(true);
+      const tableName = activeTab === 'inactive' ? 'deleted_donors' : 'donors';
       const { data, error } = await supabase
-        .from('donors')
-        .select('*')
-        .eq('isDisabled', activeTab === 'inactive');
+        .from(tableName)
+        .select('*');
 
       if (error) {
         throw error;
@@ -260,15 +293,17 @@ export default function Donor() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-black">Confirm {donorToDelete?.isDisabled ? 'Enable' : 'Disable'}</DialogTitle>
+            <DialogTitle className="text-black">
+              Confirm {activeTab === 'active' ? 'Disable' : 'Enable'}
+            </DialogTitle>
             <DialogDescription className="text-black">
-              Are you sure you want to {donorToDelete?.isDisabled ? 'enable' : 'disable'} donor {donorToDelete?.donor_name}?
+              Are you sure you want to {activeTab === 'active' ? 'disable' : 'enable'} donor {donorToDelete?.donor_name}?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button className="text-black" variant="outline" onClick={handleDisableCancel}>Cancel</Button>
             <Button variant="destructive" onClick={handleDisableConfirm}>
-              {donorToDelete?.isDisabled ? 'Enable' : 'Disable'}
+              {activeTab === 'active' ? 'Disable' : 'Enable'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -7,7 +7,7 @@ export async function middleware(req) {
         secret: process.env.NEXTAUTH_SECRET,
     });
 
-    console.log("token", token);
+    // console.log("token", token);
     const url = req.nextUrl;
     const path = url.pathname;
 
