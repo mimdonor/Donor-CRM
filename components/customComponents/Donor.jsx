@@ -48,11 +48,11 @@ export default function Donor() {
   }, [activeTab]); // Refetch when tab changes
 
   const handleView = useCallback((donor) => {
-    router.push(`/donor/view/${donor.id}`);
+    router.push(`/donors/view/${donor.id}`);
   }, [router]);
 
   const handleEdit = useCallback((donor) => {
-    router.push(`/donor/editDonor/${donor.id}`);
+    router.push(`/donors/editDonor/${donor.id}`);
   }, [router]);
 
   const handleDisableClick = useCallback((donor) => {
@@ -115,7 +115,7 @@ export default function Donor() {
   }, []);
 
   const handlePrint = useCallback((donor) => {
-    router.push(`/donor/print/${donor.id}`);
+    router.push(`/donors/print/${donor.id}`);
   }, [router]);
 
   const allColumns = [

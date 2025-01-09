@@ -26,7 +26,7 @@ import {
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
-  { icon: User, label: 'Donors', href: '/donor' },
+  { icon: User, label: 'Donors', href: '/donors' },
   { icon: IndianRupee, label: 'Donations', href: '/donations' },
   { 
     icon: FileText, 
