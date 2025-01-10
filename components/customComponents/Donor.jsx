@@ -248,7 +248,7 @@ export default function Donor() {
             >
               Import Donor
             </Button>
-            <Link href="/donor/addDonor">
+            <Link href="/donors/addDonor">
               <Button className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]">
                 Add Donor
               </Button>
