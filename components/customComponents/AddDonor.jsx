@@ -258,7 +258,7 @@ export default function AddDonor({ donorId }) {
       console.error(isEditing ? "Error updating donor" : "Error adding donor", result.error);
     } else {
       console.log(result.data);
-      router.push('/donor');
+      router.push('/donors');
     }
   };
 
