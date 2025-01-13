@@ -72,7 +72,7 @@ export async function POST(req) {
 
     // Send to messaging API
     const messageData = new URLSearchParams({
-      appkey: 'cc2aad5c-2fa1-4bbf-9c51-efcab2f423ed',
+      appkey: 'c41cb8a9-e232-4ec5-b098-6e5c8f51deb7',
       authkey: 'jSvVJO1Lp3u07oDKDESCrDxyBoV7LSZ0UrMCT5t642H15j9YNX',
       to: donor.phone,
       message: 'Thank you for your contribution!',
