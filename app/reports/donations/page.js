@@ -15,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { isAfter, isBefore, startOfDay } from 'date-fns';
+import { usePermissions } from "@/context/PermissionsProvider";
 
 const Page = () => {
     const [donations, setDonations] = useState([]);
@@ -27,6 +27,9 @@ const Page = () => {
         donorName: '',
         paymentType: '',
     });
+
+    const { permissions, user } = usePermissions();
+    const reportsPermissions = permissions?.reportsModule || {};
 
     const router = useRouter();
 
@@ -181,6 +184,14 @@ const Page = () => {
 
         setFilters(prev => ({ ...prev, [type === 'start' ? 'startDate' : 'endDate']: date }));
     };
+
+    if (reportsPermissions.allowAccess && !reportsPermissions.onlyView) {
+        return (
+          <div className="flex justify-center items-center h-full">
+            <h2 className="text-2xl font-bold text-black">You don't have view access to this module</h2>
+          </div>
+        );
+      }
 
     return (
         <div className="space-y-4 m-4 text-gray-900 dark:text-gray-100">

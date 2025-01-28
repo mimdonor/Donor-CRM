@@ -44,7 +44,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import * as XLSX from 'xlsx';
 
-export default function PaginatedTable({ data, columns, isColumnButton, searchText, searchColumn, onImport }) {
+export default function PaginatedTable({ data, columns, isColumnButton, isExportButton, searchText, searchColumn, onImport }) {
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
@@ -98,14 +98,16 @@ export default function PaginatedTable({ data, columns, isColumnButton, searchTe
           className="max-w-sm"
         />
         <div className="flex space-x-2">
+          {isExportButton && 
           <Button variant="outline" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
-          <Button variant="outline" onClick={onImport}>
+          }
+          {/* <Button variant="outline" onClick={onImport}>
             <Upload className="mr-2 h-4 w-4" />
             Import
-          </Button>
+          </Button> */}
           {isColumnButton && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

@@ -24,6 +24,7 @@ import {
 import ImportExcelModal from './ImportExcelModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { usePermissions } from "@/context/PermissionsProvider";
 
 const Donations = () => {
   const router = useRouter();
@@ -39,6 +40,8 @@ const Donations = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
   const [isSending, setIsSending] = useState(false);
+  const { permissions, user } = usePermissions();
+  const donationsPermissions = permissions?.donationsModule || {};
 
   const handleView = useCallback((donation) => {
     router.push(`/donations/viewDonation/${donation.id}`);
@@ -175,24 +178,38 @@ const Donations = () => {
                 <Eye className="mr-2 h-4 w-4" />
                 <span>View</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleEdit(donation)}>
-                <Edit className="mr-2 h-4 w-4" />
-                <span>Edit</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePrint(donation)}>
-                <Printer className="mr-2 h-4 w-4" />
-                <span>Print</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDeleteClick(donation)}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                <span>Delete/Disable Donation</span>
-              </DropdownMenuItem>
+              {donationsPermissions.canEdit && (
+                <DropdownMenuItem onClick={() => handleEdit(donation)}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  <span>Edit</span>
+                </DropdownMenuItem>
+              )}
+              {donationsPermissions.canPrint && (
+                <DropdownMenuItem onClick={() => handlePrint(donation)}>
+                  <Printer className="mr-2 h-4 w-4" />
+                  <span>Print</span>
+                </DropdownMenuItem>
+              )}
+              {donationsPermissions.canDelete && (
+                <DropdownMenuItem onClick={() => handleDeleteClick(donation)}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  <span>Delete/Disable Donation</span>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );
       },
     },
   ];
+
+  if (donationsPermissions.allowAccess && !donationsPermissions.canAdd && !donationsPermissions.canEdit && !donationsPermissions.onlyView && !donationsPermissions.canDelete && !donationsPermissions.canPrint) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <h2 className="text-2xl font-bold">You don't have view access to this module</h2>
+      </div>
+    );
+  }
 
   const fetchData = async ({ pageIndex, pageSize }) => {
     setIsLoading(true);
@@ -226,10 +243,14 @@ const Donations = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold">Donations List</h2>
         <div className="space-x-2 flex items-center">
-          <Button className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]" onClick={handlePrintReceipt}>Print Receipt</Button>
-          <Link href="/donations/addDonation">
-            <Button className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]">Add Donation</Button>
-          </Link>
+          {donationsPermissions.canPrint && (
+            <Button className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]" onClick={handlePrintReceipt}>Send Receipt</Button>
+          )}
+          {donationsPermissions.canAdd && (
+            <Link href="/donations/addDonation">
+              <Button className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]">Add Donation</Button>
+            </Link>
+          )}
         </div>
       </div>
       <Card className="w-full">

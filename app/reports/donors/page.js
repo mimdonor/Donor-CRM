@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from '@/lib/supabase';
 import { MoreHorizontal, Eye, Edit, Trash2, X } from "lucide-react";
 import { useRouter } from 'next/navigation';
+import { usePermissions } from "@/context/PermissionsProvider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +21,8 @@ const Page = () => {
     const [donors, setDonors] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
+    const { permissions, user } = usePermissions();
+    const reportsPermissions = permissions?.reportsModule || {};  
     const [filters, setFilters] = useState({
         startDate: null,
         endDate: null,
@@ -168,6 +171,14 @@ const Page = () => {
             setFilters(prev => ({ ...prev, endDate: date }));
         }
     };
+
+    if (reportsPermissions.allowAccess && !reportsPermissions.onlyView) {
+        return (
+          <div className="flex justify-center items-center h-full">
+            <h2 className="text-2xl font-bold text-black">You don't have view access to this module</h2>
+          </div>
+        );
+      }
 
     return (
         <div className="space-y-4 m-4 text-gray-900 dark:text-gray-100">

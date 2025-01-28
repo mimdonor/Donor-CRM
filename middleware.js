@@ -1,5 +1,7 @@
 import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
+import { getSession } from 'next-auth/react';
 
 export async function middleware(req) {
     const token = await getToken({
@@ -7,8 +9,37 @@ export async function middleware(req) {
         secret: process.env.NEXTAUTH_SECRET,
     });
 
-    // console.log("token", token);
-    const url = req.nextUrl;
+    const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('email', token?.email)
+        .single();
+
+    if (userError || !userData) {
+        return NextResponse.redirect('/login');
+    }
+
+    const { data: roleData, error: roleError } = await supabase
+        .from('roles')
+        .select('permissions')
+        .eq('role_name', userData.role)
+        .single();
+
+    if (roleError || !roleData) {
+        return NextResponse.redirect('/login');
+    }
+
+    const permissions = roleData.permissions;
+
+    const url = req.nextUrl.clone();
+    if (url.pathname.startsWith('/donors') && !permissions.donorModule?.allowAccess) {
+        return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
+    }
+
+    if (url.pathname.startsWith('/donations') && !permissions.donationsModule?.allowAccess) {
+        return NextResponse.redirect(new URL('/dashboard', req.nextUrl));
+    }
+
     const path = url.pathname;
 
     const publicPaths = ["/"];
@@ -29,5 +60,7 @@ export async function middleware(req) {
 export const config = {
     matcher: [
         '/((?!api|_next/static|_next/image|fonts|favicon.ico).*)',
+        '/donors/:path*', 
+        '/donations/:path*'
     ],
 };

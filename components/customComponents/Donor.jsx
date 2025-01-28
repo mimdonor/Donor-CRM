@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/dialog";
 import ImportExcelModal from './ImportExcelModal';
 import { Checkbox } from "@/components/ui/checkbox";
+import { usePermissions } from "@/context/PermissionsProvider";
+
 
 export default function Donor() {
   const router = useRouter();
@@ -33,6 +35,8 @@ export default function Donor() {
   const [donorToDelete, setDonorToDelete] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("active");
+  const { permissions, user } = usePermissions();
+  const donorPermissions = permissions?.donorModule || {};
   const [visibleColumns, setVisibleColumns] = useState({
     donor_number: true,
     donor_name: true,
@@ -155,21 +159,32 @@ export default function Donor() {
                 <Eye className="mr-2 h-4 w-4" />
                 <span>View</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleEdit(donor)}>
+              {
+                donorPermissions.canEdit &&
+                (
+                <DropdownMenuItem onClick={() => handleEdit(donor)}>
                 <Edit className="mr-2 h-4 w-4" />
                 <span>Edit</span>
               </DropdownMenuItem>
+              )}
+              {
+                donorPermissions.canPrint &&
+                (
               <DropdownMenuItem onClick={() => handlePrint(donor)}>
                 <Printer className="mr-2 h-4 w-4" />
                 <span>Print</span>
               </DropdownMenuItem>
-              {activeTab === 'active' && (
+                )}
+                
+              {activeTab === 'active' && donorPermissions.canDelete && (
+                
                 <DropdownMenuItem onClick={() => handleDisableClick(donor)}>
                   <Ban className="mr-2 h-4 w-4" />
                   <span>Disable Donor</span>
                 </DropdownMenuItem>
               )}
-              {activeTab === 'inactive' && (
+              {activeTab === 'active' && donorPermissions.canDelete && (
+
                 <DropdownMenuItem onClick={() => handleDisableClick(donor)}>
                   <Ban className="mr-2 h-4 w-4" />
                   <span>Enable Donor</span>
@@ -228,6 +243,14 @@ export default function Donor() {
     }
   }
 
+  if (donorPermissions.allowAccess && !donorPermissions.canAdd && !donorPermissions.canEdit && !donorPermissions.onlyView && !donorPermissions.canDelete && !donorPermissions.canPrint) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <h2 className="text-2xl font-bold">You don't have view access to this module</h2>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -242,17 +265,21 @@ export default function Donor() {
           </TabsList>
 
           <div className="flex space-x-2">
-            <Button 
-              className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]" 
-              onClick={() => setIsImportModalOpen(true)}
-            >
-              Import Donor
-            </Button>
-            <Link href="/donors/addDonor">
-              <Button className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]">
-                Add Donor
+            {donorPermissions.canAdd && (
+              <Button 
+                className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]" 
+                onClick={() => setIsImportModalOpen(true)}
+              >
+                Import Donor
               </Button>
-            </Link>
+            )}
+            {permissions && donorPermissions.canAdd && (
+              <Link href="/donors/addDonor">
+                <Button className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]">
+                  Add Donor
+                </Button>
+              </Link>
+            )}
             <ColumnToggle />
           </div>
         </div>
@@ -264,6 +291,7 @@ export default function Donor() {
                 columns={columns}
                 data={donors}
                 isColumnButton={false}
+                isExportButton={donorPermissions.canAdd || donorPermissions.canEdit}
                 searchText="Search donors..."
               />
             </CardContent>
@@ -277,6 +305,7 @@ export default function Donor() {
                 columns={columns}
                 data={donors}
                 isColumnButton={false}
+                isExportButton={donorPermissions.canAdd || donorPermissions.canEdit}
                 searchText="Search donors..."
               />
             </CardContent>

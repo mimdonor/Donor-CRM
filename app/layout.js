@@ -3,7 +3,11 @@ import "./globals.css";
 import Sidebar from "../components/customComponents/Sidebar";
 import Header from "@/components/customComponents/Header";
 import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "@/components/customComponents/ThemeProvider"
+import { ThemeProvider } from "@/components/customComponents/ThemeProvider";
+import { PermissionsProvider } from "@/context/PermissionsProvider";
+import { AuthProviders } from "./Provider";
+import { AuthProvider } from "@/context/AuthProvider";
+
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -33,6 +37,10 @@ export default function RootLayout({ children }) {
           enableSystem
           disableTransitionOnChange
         > */}
+        <AuthProviders>
+        <AuthProvider>
+
+        <PermissionsProvider>
           <Sidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Header />
@@ -41,6 +49,9 @@ export default function RootLayout({ children }) {
             </main>
           </div>
           <Toaster />
+        </PermissionsProvider>
+        </AuthProvider>
+        </AuthProviders>
         {/* </ThemeProvider> */}
       </body>
     </html>

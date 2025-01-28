@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import Logo from "@/public/assets/Logo-1.png";
 import { supabase } from "@/lib/supabase";
+import { usePermissions } from "@/context/PermissionsProvider";
 import { signOut } from "next-auth/react";
 import { 
   ChevronLeft,
@@ -26,12 +27,13 @@ import {
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
-  { icon: User, label: 'Donors', href: '/donors' },
-  { icon: IndianRupee, label: 'Donations', href: '/donations' },
+  { icon: User, label: 'Donors', href: '/donors', permission: 'donorModule' },
+  { icon: IndianRupee, label: 'Donations', href: '/donations', permission: 'donationsModule' },
   { 
     icon: FileText, 
     label: 'Reports', 
     href: '/reports',
+    permission: 'reportsModule',
     submodules: [
       { label: 'Donors', href: '/reports/donors' },
       { label: 'Donations', href: '/reports/donations' },
@@ -46,13 +48,17 @@ const menuItems = [
       { label: 'Donors', href: '/settings/donor' },
       { label: 'Donations', href: '/settings/donations' },
       { label: 'Admin', href: '/settings/admin' },
-    ]
+      {label: 'Staffs', href: '/settings/staffs' },
+      {label: 'Permissions', href: '/settings/permissions'},
+    ],
+    role: 'Super Admin'
   },
 ];
 
 export default function Sidebar() {
   const [expanded, setExpanded] = useState(true);
   const [openSubmenu, setOpenSubmenu] = useState(null);
+  const { permissions, user } = usePermissions();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -64,6 +70,8 @@ export default function Sidebar() {
   if(pathname === "/") {
     return null;
   }
+
+
 
   const handleLogout = async () => {
    signOut();
@@ -112,6 +120,12 @@ export default function Sidebar() {
           <ul>
             <TooltipProvider>
               {menuItems.map((item, index) => {
+                if (item.permission && permissions && !permissions[item.permission]?.allowAccess) {
+                  return null;
+                }
+                if (item.role && user?.role !== item.role) {
+                  return null;
+                }
                 const isActive = item.href === '/' 
                   ? pathname === '/' 
                   : pathname.startsWith(item.href);

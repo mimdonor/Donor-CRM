@@ -21,6 +21,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { usePermissions } from "@/context/PermissionsProvider";
 
 const Page = () => {
     const [donors, setDonors] = useState([]);
@@ -37,6 +38,9 @@ const Page = () => {
         donorZone: "",
         representative: "",
     });
+
+    const { permissions, user } = usePermissions();
+    const reportsPermissions = permissions?.reportsModule || {};
 
     const router = useRouter();
 
@@ -257,6 +261,14 @@ const Page = () => {
         fetchDropdownOptions();
     }, []);
 
+    if (reportsPermissions.allowAccess && !reportsPermissions.onlyView) {
+        return (
+          <div className="flex justify-center items-center h-full">
+            <h2 className="text-2xl text-black font-bold">You don't have view access to this module</h2>
+          </div>
+        );
+      }
+
     return (
         <div className="space-y-4 m-4 text-gray-900 dark:text-gray-100">
             <h2 className="text-3xl font-bold">Address Report</h2>
@@ -415,10 +427,12 @@ const Page = () => {
                         searchText="Search donors..."
                         searchColumn="first_name"
                     />
-
-                    <div className="flex gap-4">
+                    {
+                        reportsPermissions.canPrint && (
+                        <div className="flex gap-4">
                         <Button className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]" onClick={handlePrintAddresses}>Print Addresses</Button>
                     </div>
+                    )}
                 </CardContent>
             </Card>
         </div>
