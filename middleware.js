@@ -15,21 +15,17 @@ export async function middleware(req) {
         .eq('email', token?.email)
         .single();
 
-    if (userError || !userData) {
-        return NextResponse.redirect('/login');
-    }
+   
 
     const { data: roleData, error: roleError } = await supabase
         .from('roles')
         .select('permissions')
-        .eq('role_name', userData.role)
+        .eq('role_name', userData?.role)
         .single();
 
-    if (roleError || !roleData) {
-        return NextResponse.redirect('/login');
-    }
+    
 
-    const permissions = roleData.permissions;
+    const permissions = roleData?.permissions;
 
     const url = req.nextUrl.clone();
     if (url.pathname.startsWith('/donors') && !permissions.donorModule?.allowAccess) {
@@ -60,7 +56,5 @@ export async function middleware(req) {
 export const config = {
     matcher: [
         '/((?!api|_next/static|_next/image|fonts|favicon.ico).*)',
-        '/donors/:path*', 
-        '/donations/:path*'
     ],
 };
