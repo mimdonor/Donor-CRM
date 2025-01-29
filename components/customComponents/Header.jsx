@@ -7,7 +7,7 @@ export default function Header() {
   const pathname = usePathname();
 
   // Don't render the header on print pages
-  if (pathname.startsWith('/donations/print/') || pathname.startsWith('/reports/address/print') || pathname.startsWith('/donor/print') || pathname.startsWith('/forgot-password') || pathname.startsWith('/settings/staffs/print') ) {
+  if (pathname.startsWith('/donations/print/') || pathname.startsWith('/reports/address/print') || pathname.startsWith('/donors/print') || pathname.startsWith('/forgot-password') || pathname.startsWith('/settings/staffs/print') ) {
     return null;
   }
 

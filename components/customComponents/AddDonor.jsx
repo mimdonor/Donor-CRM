@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Country, State, City } from 'country-state-city';
+import { toast, Toaster } from 'react-hot-toast';
 
 const donorTypes = [
   { id: 1, name: 'Individual' },
@@ -49,6 +50,7 @@ export default function AddDonor({ donorId }) {
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedState, setSelectedState] = useState(null);
   const [selectedCity, setSelectedCity] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchDropdownOptions();
@@ -179,9 +181,11 @@ export default function AddDonor({ donorId }) {
       // Set selected country, state, and city
       const country = Country.getAllCountries().find(c => c.name === data.country);
       const state = State.getStatesOfCountry(country?.isoCode).find(s => s.name === data.state);
+      const city = City.getCitiesOfState(country?.isoCode, state?.isoCode).find(c => c.name === data.city);
+
       setSelectedCountry(country);
       setSelectedState(state);
-      setSelectedCity(data.city);
+      setSelectedCity(city);
 
       // Force update of controlled inputs
       Object.keys(formData).forEach(key => {
@@ -215,21 +219,24 @@ export default function AddDonor({ donorId }) {
   };
 
   const handleCityChange = (cityName) => {
-    setSelectedCity(cityName);
-    setValue('city', cityName, { shouldValidate: true });
+    const city = City.getAllCities().find(c => c.name === cityName && c.stateCode === selectedState.isoCode && c.countryCode === selectedCountry.isoCode);
+    setSelectedCity(city);
+    setValue('city', city.name, { shouldValidate: true });
   };
 
   const onSubmit = async (data) => {
+    setIsSubmitting(true);
+
     const selectedZone = dropdownOptions.donorZones.find(zone => zone.name === data.donorZone);
     const donorData = {
-      donor_number: lastDonorId,
+      donor_number: donorId ? donorNumber : lastDonorId,
       donor_name: `${data.firstName} ${data.lastName}`,
       institution_name: data.donorType === 'Institution' ? data.institutionName : '',
       phone: data.phone,
       street_name: data.streetName,
       area_name: data.areaName,
       landmark: data.landmark,
-      city: selectedCity,
+      city: selectedCity.name,
       state: selectedState.name,
       country: selectedCountry.name,
       pincode: Number(data.pincode),
@@ -251,29 +258,42 @@ export default function AddDonor({ donorId }) {
       donorData.contact_person = `${data.contactPersonTitle} ${data.contactPersonName}`.trim();
     }
 
-    let result;
-    if (isEditing) {
-      result = await supabase
-        .from('donors')
-        .update(donorData)
-        .eq('id', donorId);
-    } else {
-      result = await supabase
-        .from('donors')
-        .insert([donorData])
-        .select();
-    }
+    toast.promise(
+      (async () => {
+        let result;
+        if (isEditing) {
+          result = await supabase
+            .from('donors')
+            .update(donorData)
+            .eq('id', donorId);
+        } else {
+          result = await supabase
+            .from('donors')
+            .insert([donorData])
+            .select();
+        }
 
-    if (result.error) {
-      console.error(isEditing ? "Error updating donor" : "Error adding donor", result.error);
-    } else {
-      console.log(result.data);
+        if (result.error) {
+          throw new Error(result.error.message);
+        }
+
+        reset();
+        setIsSubmitting(false);
+        return isEditing ? "Donor updated successfully" : "Donor added successfully";
+      })(),
+      {
+        loading: isEditing ? "Updating donor..." : "Adding donor...",
+        success: (message) => message,
+        error: (error) => `Failed to ${isEditing ? 'update' : 'add'} donor: ${error.message}`,
+      }
+    ).then(() => {
       router.push('/donors');
-    }
+    });
   };
 
   return (
     <Card className="w-full max-w-4xl mx-auto border-gray-300 border-2">
+      <Toaster position="top-center" reverseOrder={false} />
       <CardHeader className="flex flex-row justify-between items-center">
         <div className="w-full flex justify-between items-center">
           <CardTitle className="text-2xl md:text-3xl">{isEditing ? 'Edit Donor' : 'Add Donor'}</CardTitle>
@@ -580,7 +600,7 @@ export default function AddDonor({ donorId }) {
                       <Select onValueChange={(value) => {
                         field.onChange(value);
                         handleCityChange(value);
-                      }} value={selectedCity} disabled={!selectedState}>
+                      }} value={selectedCity?.name} disabled={!selectedState}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select City" />
                         </SelectTrigger>
@@ -655,7 +675,7 @@ export default function AddDonor({ donorId }) {
               </div>
             </div>
           </div>
-          <Button type="submit" className="w-full bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]">{isEditing ? 'Update Donor' : 'Add Donor'}</Button>
+          <Button type="submit" className="w-full bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]" disabled={isSubmitting}>{isEditing ? 'Update Donor' : 'Add Donor'}</Button>
         </form>
       </CardContent>
     </Card>
