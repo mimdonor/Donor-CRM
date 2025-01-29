@@ -106,19 +106,29 @@ export default function AddDonor({ donorId }) {
     const { data, error } = await supabase
       .from('donors')
       .select('donor_number')
-      .order('donor_number', { ascending: false })
+      .order('id', { ascending: false })
       .limit(1);
-
+  
     if (error) {
       console.error('Error fetching last donor ID:', error);
     } else if (data && data.length > 0) {
       const lastId = data[0].donor_number;
-      const newId = 'G' + (parseInt(lastId.slice(1)) + 1).toString().padStart(2, '0');
+  
+      // Extract the numeric part of the last ID
+      const numericPart = parseInt(lastId.slice(1), 10);
+  
+      // Increment the numeric part
+      const newNumericPart = numericPart + 1;
+  
+      // Generate the new ID without padding
+      const newId = 'G' + newNumericPart;
+  
+      console.log('New donor ID:', newId);
       setLastDonorId(newId);
-    }
-    else {
-      // If there are no donors in the database, start from 1
-      const newId = 'G01';
+    } else {
+      // If there are no donors, start from G00
+      const newId = 'G00';
+      console.log('No donors found, starting from G00');
       setLastDonorId(newId);
     }
   };

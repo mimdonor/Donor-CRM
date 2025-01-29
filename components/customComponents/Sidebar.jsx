@@ -63,7 +63,7 @@ export default function Sidebar() {
   const router = useRouter();
 
   // Don't render the sidebar on print pages
-  if (pathname.startsWith('/donations/print/') || pathname.startsWith('/reports/address/print') || pathname.startsWith('/donor/print') || pathname.startsWith('/login')) {
+  if (pathname.startsWith('/donations/print/') || pathname.startsWith('/reports/address/print') || pathname.startsWith('/donor/print') || pathname.startsWith('/login') || pathname.startsWith('/settings/staffs/print')) {
     return null;
   }
 
@@ -75,6 +75,8 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
    signOut();
+   router.replace("/");
+   
   };
 
   const toggleExpanded = () => {
