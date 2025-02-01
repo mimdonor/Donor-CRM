@@ -42,9 +42,10 @@ export default function Donor() {
     donor_name: true,
     phone: true,
     donor_source: true,
+    institution_name: true,
     representative: true,
     donor_zone: true,
-    donor_type: true
+    donor_type: true,
   });
 
   useEffect(() => {
@@ -125,6 +126,8 @@ export default function Donor() {
   const allColumns = [
     { header: "Donor ID", accessorKey: "donor_number" },
     { header: "Donor Name", accessorKey: "donor_name" },
+    {header: "Donor Type", accessorKey: "donor_type"},
+    {header: "Institution Name", accessorKey: "institution_name"},
     { header: "Mobile Number", accessorKey: "phone" },
     { header: "Street Name", accessorKey: "street_name" },
     { header: "Area Name", accessorKey: "area_name" },
@@ -183,7 +186,7 @@ export default function Donor() {
                   <span>Disable Donor</span>
                 </DropdownMenuItem>
               )}
-              {activeTab === 'active' && donorPermissions.canDelete && (
+              {activeTab === 'inactive' && donorPermissions.canDelete && (
 
                 <DropdownMenuItem onClick={() => handleDisableClick(donor)}>
                   <Ban className="mr-2 h-4 w-4" />
@@ -293,6 +296,7 @@ export default function Donor() {
                 isColumnButton={false}
                 isExportButton={donorPermissions.canAdd || donorPermissions.canEdit}
                 searchText="Search donors..."
+                searchColumn="donor_name"
               />
             </CardContent>
           </Card>
@@ -307,6 +311,7 @@ export default function Donor() {
                 isColumnButton={false}
                 isExportButton={donorPermissions.canAdd || donorPermissions.canEdit}
                 searchText="Search donors..."
+                searchColumn="donor_name"
               />
             </CardContent>
           </Card>

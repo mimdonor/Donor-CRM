@@ -242,7 +242,9 @@ export default function AddStaffs({ staffId }) {
         success: (message) => message,
         error: (error) => `Failed to ${staffId ? 'update' : 'add'} staff: ${error.message}`,
       }
-    );
+    ).then(() => {
+      router.push('/settings/staffs');
+    });
   };
 
   return (
@@ -484,7 +486,11 @@ export default function AddStaffs({ staffId }) {
               {errors.phone && <p className="text-red-500 text-sm">{errors.phone.message}</p>}
             </div>
           </div>
-          <Button type="submit" className="w-full bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]" disabled={isSubmitting}>
+          <Button 
+            type="submit" 
+            className="w-full bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]" 
+            disabled={isSubmitting}
+          >
             {isSubmitting ? (staffId ? 'Updating...' : 'Adding...') : (staffId ? 'Update Staff' : 'Add Staff')}
           </Button>
         </form>

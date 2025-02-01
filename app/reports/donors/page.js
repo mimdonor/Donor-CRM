@@ -63,7 +63,7 @@ const Page = () => {
     const columns = [
         {header: 'Donor ID', accessorKey: 'id'},
         {header: 'Donor Number', accessorKey: 'donor_number'},
-        {header: 'Donor Name', accessorFn: (row) => `${row.donor_name}`},
+        {header: 'Donor Name', accessorKey: 'donor_name'},
         {header: 'Phone', accessorKey: 'phone'},
         {header: 'Donor Type', accessorKey: 'donor_type'},
         {header: 'Category', accessorKey: 'category'},
@@ -93,9 +93,7 @@ const Page = () => {
                 query = query.lte('last_donation_date', filters.endDate.toISOString());
             }
             if (filters.donorName) {
-                query = query.or(
-                    `first_name.ilike.%${filters.donorName}%,last_name.ilike.%${filters.donorName}%`
-                );
+                query = query.ilike('donor_name', `%${filters.donorName}%`);
             }
             if (filters.donorType) {
                 query = query.eq('donor_type', filters.donorType);
@@ -244,7 +242,7 @@ const Page = () => {
                         totalCount={totalCount}
                         isLoading={isLoading}
                         searchText="Search donors..."
-                        searchColumn="name"
+                        searchColumn="donor_name"
                     />
                 </CardContent>
             </Card>

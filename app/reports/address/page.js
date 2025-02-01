@@ -425,7 +425,7 @@ const Page = () => {
                         totalCount={totalCount}
                         isLoading={isLoading}
                         searchText="Search donors..."
-                        searchColumn="first_name"
+                        searchColumn="donor_name"
                     />
                     {
                         reportsPermissions.canPrint && (

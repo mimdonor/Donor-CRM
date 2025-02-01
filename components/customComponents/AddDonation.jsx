@@ -22,6 +22,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { toast } from "react-toastify";
 
 const donorTypes = [
   { value: 'Individual', label: 'Individual' },
@@ -45,6 +46,7 @@ const AddDonation = () => {
   const [lastReceiptNo, setLastReceiptNo] = useState(null);
   const [selectedDonor, setSelectedDonor] = useState(null);
   const [organizations, setOrganizations] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchDonors();
@@ -169,13 +171,13 @@ const AddDonation = () => {
   };
 
   const onSubmit = async (data) => {
-    console.log("Form submitted with data:", data);
-    setError(null);
+    setIsSubmitting(true);
 
     const selectedDonor = donors.find((donor) => donor.id.toString() === data.donor);
 
     if (!selectedDonor) {
       setError("Selected donor not found. Please try again.");
+      setIsSubmitting(false);
       return;
     }
 
@@ -192,33 +194,34 @@ const AddDonation = () => {
       organization: data.organization, // Add the organization
     };
 
-    console.log("Preparing to insert donation data:", donationData);
-    try {
-      // Insert donation data
-      const { data: insertedDonation, error: donationError } = await supabase
-        .from('donations')
-        .insert(donationData)
-        .single();
+    toast.promise(
+      (async () => {
+        const { data: insertedDonation, error: donationError } = await supabase
+          .from('donations')
+          .insert(donationData)
+          .single();
 
-      if (donationError) throw donationError;
+        if (donationError) throw donationError;
 
-      // Update donor's last donation date
-      const { error: donorUpdateError } = await supabase
-        .from('donors')
-        .update({ last_donation_date: donationData.date })
-        .eq('id', selectedDonor.id);
+        const { error: donorUpdateError } = await supabase
+          .from('donors')
+          .update({ last_donation_date: donationData.date })
+          .eq('id', selectedDonor.id);
 
-      if (donorUpdateError) throw donorUpdateError;
+        if (donorUpdateError) throw donorUpdateError;
 
-      const insertedData = insertedDonation;
-
-      console.log("Donation added and donor updated successfully:", insertedData);
-      reset(); // Reset form fields
-      router.push("/donations"); // Redirect to donations list
-    } catch (error) {
-      console.error("Error adding donation or updating donor:", error);
-      setError("Failed to add donation or update donor. Please try again.");
-    }
+        reset();
+        setIsSubmitting(false);
+        return "Donation added successfully";
+      })(),
+      {
+        loading: "Adding donation...",
+        success: (message) => message,
+        error: (error) => `Failed to add donation: ${error.message}`,
+      }
+    ).then(() => {
+      router.push('/donations');
+    });
   };
 
   return (
@@ -430,7 +433,13 @@ const AddDonation = () => {
             </div>
           )}
 
-          <Button className="w-full bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]" type="submit">Submit</Button>
+          <Button 
+            type="submit" 
+            className="w-full bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]" 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </Button>
         </form>
       </CardContent>
     </Card>
