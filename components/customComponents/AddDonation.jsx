@@ -22,7 +22,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { MultiSelect } from "@/components/ui/multi-select";
-import { toast } from "react-toastify";
+import { toast, Toaster } from 'react-hot-toast';
 
 const donorTypes = [
   { value: 'Individual', label: 'Individual' },
@@ -226,6 +226,7 @@ const AddDonation = () => {
 
   return (
     <Card className="w-full max-w-2xl mx-auto mt-4">
+      <Toaster position="top-center" reverseOrder={false} />
       <CardHeader>
         <div className="w-full flex justify-between items-center">
           <CardTitle className="text-2xl">Add Donation</CardTitle>
