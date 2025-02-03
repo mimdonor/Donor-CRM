@@ -48,10 +48,45 @@ const PrintPage = () => {
 
     useEffect(() => {
         const fetchAddresses = async () => {
-            const { data, error } = await supabase
+            // Get the URL search params
+            const params = new URLSearchParams(window.location.search);
+            
+            // Build the query
+            let query = supabase
                 .from('donors')
                 .select('*')
                 .order('donor_number', { ascending: true });
+
+            // Apply filters from URL params
+            if (params.get('startDate')) {
+                query = query.gte('created_at', params.get('startDate'));
+            }
+            if (params.get('endDate')) {
+                query = query.lte('created_at', params.get('endDate'));
+            }
+            if (params.get('donorName')) {
+                query = query.or(`donor_name.ilike.%${params.get('donorName')}%,contact_person.ilike.%${params.get('donorName')}%`);
+            }
+            if (params.get('city')) {
+                query = query.ilike('city', `%${params.get('city')}%`);
+            }
+            if (params.get('state')) {
+                query = query.ilike('state', `%${params.get('state')}%`);
+            }
+            if (params.get('donorType')) {
+                query = query.eq('donor_type', params.get('donorType'));
+            }
+            if (params.get('donorSource')) {
+                query = query.eq('donor_source', params.get('donorSource'));
+            }
+            if (params.get('donorZone')) {
+                query = query.eq('donor_zone', params.get('donorZone'));
+            }
+            if (params.get('representative')) {
+                query = query.eq('representative', params.get('representative'));
+            }
+
+            const { data, error } = await query;
 
             if (error) {
                 console.error('Error fetching addresses:', error);
@@ -65,10 +100,10 @@ const PrintPage = () => {
     }, []);
 
     const formatAddress = (donor) => {
-        return `${donor.donor_name}
-${donor.street_name}, ${donor.area_name}
-${donor.landmark ? donor.landmark + ', ' : ''}${donor.city}
-${donor.state}, ${donor.country} - ${donor.pincode}`;
+        return `${donor.institution_name ? donor.contact_person : donor.donor_name}
+    ${donor.street_name}, ${donor.area_name}
+    ${donor.landmark ? donor.landmark + ', ' : ''}${donor.city}
+    ${donor.state}, ${donor.country} - ${donor.pincode}`;
     };
 
     const AddressDocument = ({ addresses }) => (

@@ -66,7 +66,10 @@ const Page = () => {
         {
             header: "Name",
             accessorKey: "donor_name",
-            cell: ({ row }) => `${row.original.donor_name}`,
+            cell: ({ row }) => {
+                const donor = row.original;
+                return donor.donor_type === 'Institution' ? donor.contact_person : donor.donor_name;
+            },
         },
         { header: "City", accessorKey: "city" },
         { header: "State", accessorKey: "state" },
@@ -96,9 +99,7 @@ const Page = () => {
                 query = query.lte('created_at', filters.endDate.toISOString());
             }
             if (filters.donorName) {
-                query = query.or(
-                    `first_name.ilike.%${filters.donorName}%,last_name.ilike.%${filters.donorName}%`
-                );
+                query = query.or(`donor_name.ilike.%${filters.donorName}%,contact_person.ilike.%${filters.donorName}%`);
             }
             if (filters.city) {
                 query = query.ilike("city", `%${filters.city}%`);
@@ -216,7 +217,19 @@ const Page = () => {
     };
 
     const handlePrintAddresses = () => {
-        router.push("/reports/address/print");
+        // Create URLSearchParams object with non-empty filters
+        const searchParams = new URLSearchParams();
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value) {
+                if (value instanceof Date) {
+                    searchParams.append(key, value.toISOString());
+                } else {
+                    searchParams.append(key, value);
+                }
+            }
+        });
+        
+        router.push(`/reports/address/print?${searchParams.toString()}`);
     };
 
     const [dropdownOptions, setDropdownOptions] = useState({

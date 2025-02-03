@@ -124,8 +124,18 @@ export default function Donor() {
   }, [router]);
 
   const allColumns = [
-    { header: "Donor ID", accessorKey: "donor_number" },
-    { header: "Donor Name", accessorKey: "donor_name" },
+    { 
+      header: "Donor ID", 
+      accessorKey: "donor_number" 
+    },
+    { 
+      header: "Donor Name", 
+      accessorKey: "donor_name",
+      cell: ({ row }) => {
+        const donor = row.original;
+        return donor.donor_type === 'Institution' ? donor.contact_person : donor.donor_name;
+      }
+    },
     {header: "Donor Type", accessorKey: "donor_type"},
     {header: "Institution Name", accessorKey: "institution_name"},
     { header: "Mobile Number", accessorKey: "phone" },
@@ -139,7 +149,6 @@ export default function Donor() {
     { header: "Donor Source", accessorKey: "donor_source" },
     { header: "In charge / Representative", accessorKey: "representative" },
     { header: "Donor Zone", accessorKey: "donor_zone" },
-    { header: "Donor Type", accessorKey: "donor_type" },
     { header: "Pan Number", accessorKey: "pan_number" },
   ];
 
