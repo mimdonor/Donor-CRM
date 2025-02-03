@@ -133,7 +133,7 @@ export default function Donor() {
       accessorKey: "donor_name",
       cell: ({ row }) => {
         const donor = row.original;
-        return donor.donor_type === 'Institution' ? donor.contact_person : donor.donor_name;
+        return donor.donor_type === 'Institution' ? donor.institution_name : donor.donor_name;
       }
     },
     {header: "Donor Type", accessorKey: "donor_type"},

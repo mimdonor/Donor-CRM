@@ -72,15 +72,20 @@ const AddDonation = () => {
   const fetchDonors = async () => {
     const { data, error } = await supabase
       .from("donors")
-      .select("id, donor_name, donor_number")
+      .select("*")  // Select all fields to get both donor_name and institution_name
       .order("donor_name", { ascending: true });
 
     if (error) {
       console.error("Error fetching donors:", error);
       setError("Failed to fetch donors");
     } else {
-      setDonors(data);
-      setFilteredDonors(data);
+      // Transform the data to include a display name
+      const transformedData = data.map(donor => ({
+        ...donor,
+        display_name: donor.donor_type === 'Institution' ? donor.institution_name : donor.donor_name
+      }));
+      setDonors(transformedData);
+      setFilteredDonors(transformedData);
     }
   };
 
@@ -131,10 +136,17 @@ const AddDonation = () => {
     setSearchTerm(value);
     const filtered = donors.filter((donor) =>
       searchBy === "name"
-        ? `${donor.donor_name}`.toLowerCase().includes(value.toLowerCase())
+        ? (donor.display_name || "").toLowerCase().includes(value.toLowerCase())
         : donor.donor_number.toString().includes(value)
     );
     setFilteredDonors(filtered);
+  };
+
+  const getDonorDisplayName = (donor) => {
+    if (donor.donor_type === 'Institution') {
+      return donor.institution_name || donor.donor_name;
+    }
+    return donor.donor_name;
   };
 
   const handleDonorChange = async (donorId, org = selectedOrganization) => {
@@ -320,7 +332,7 @@ const AddDonation = () => {
                         {filteredDonors.map((donor) => (
                           <SelectItem key={donor.id} value={donor.id.toString()}>
                             {searchBy === "name"
-                              ? `${donor.donor_name}`
+                              ? donor.display_name
                               : donor.donor_number}
                           </SelectItem>
                         ))}

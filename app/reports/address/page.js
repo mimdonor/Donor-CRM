@@ -68,7 +68,7 @@ const Page = () => {
             accessorKey: "donor_name",
             cell: ({ row }) => {
                 const donor = row.original;
-                return donor.donor_type === 'Institution' ? donor.contact_person : donor.donor_name;
+                return donor.donor_type === 'Institution' ? donor.institution_name : donor.donor_name;
             },
         },
         { header: "City", accessorKey: "city" },
@@ -79,16 +79,12 @@ const Page = () => {
         { header: "Representative", accessorKey: "representative" },
     ];
 
-    const fetchData = async ({ pageIndex, pageSize }) => {
+    const fetchData = async () => {
         setIsLoading(true);
-        const startRange = pageIndex * pageSize;
-        const endRange = startRange + pageSize - 1;
-
         try {
             let query = supabase
                 .from("donors")
-                .select("*", { count: "exact" })
-                .range(startRange, endRange)
+                .select("*")  // Remove count and range
                 .order("donor_number", { ascending: true });
 
             // Apply filters
@@ -99,7 +95,7 @@ const Page = () => {
                 query = query.lte('created_at', filters.endDate.toISOString());
             }
             if (filters.donorName) {
-                query = query.or(`donor_name.ilike.%${filters.donorName}%,contact_person.ilike.%${filters.donorName}%`);
+                query = query.or(`donor_name.ilike.%${filters.donorName}%,institution_name.ilike.%${filters.donorName}%`);
             }
             if (filters.city) {
                 query = query.ilike("city", `%${filters.city}%`);
@@ -120,12 +116,18 @@ const Page = () => {
                 query = query.eq("representative", filters.representative);
             }
 
-            const { data, error, count } = await query;
+            const { data, error } = await query;
 
             if (error) throw error;
 
-            setDonors(data);
-            setTotalCount(count);
+            // Transform the data to handle institution names
+            const transformedData = data.map(donor => ({
+                ...donor,
+                display_name: donor.donor_type === 'Institution' ? donor.institution_name : donor.donor_name
+            }));
+
+            setDonors(transformedData);
+            setTotalCount(transformedData.length);
         } catch (error) {
             console.error("Error fetching donors:", error);
         } finally {
@@ -134,7 +136,7 @@ const Page = () => {
     };
 
     useEffect(() => {
-        fetchData({ pageIndex: 0, pageSize: 10 });
+        fetchData();
     }, [filters]);
 
     const resetFilters = () => {
@@ -434,11 +436,11 @@ const Page = () => {
                     <PaginatedTable
                         columns={columns}
                         data={donors}
-                        fetchData={fetchData}
-                        totalCount={totalCount}
-                        isLoading={isLoading}
+                        isColumnButton={false}
+                        isExportButton={donorPermissions.canAdd || donorPermissions.canEdit}
                         searchText="Search donors..."
                         searchColumn="donor_name"
+                        isPagination={false}  // This will show all rows but still allow sorting and filtering
                     />
                     {
                         reportsPermissions.canPrint && (

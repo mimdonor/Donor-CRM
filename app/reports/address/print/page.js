@@ -100,7 +100,7 @@ const PrintPage = () => {
     }, []);
 
     const formatAddress = (donor) => {
-        return `${donor.institution_name ? donor.contact_person : donor.donor_name}
+        return `${donor.institution_name ? donor.institution_name : donor.donor_name}
     ${donor.street_name}, ${donor.area_name}
     ${donor.landmark ? donor.landmark + ', ' : ''}${donor.city}
     ${donor.state}, ${donor.country} - ${donor.pincode}`;

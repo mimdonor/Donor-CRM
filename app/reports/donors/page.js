@@ -63,7 +63,13 @@ const Page = () => {
     const columns = [
         {header: 'Donor ID', accessorKey: 'id'},
         {header: 'Donor Number', accessorKey: 'donor_number'},
-        {header: 'Donor Name', accessorKey: 'donor_name'},
+        {header: 'Donor Name', 
+        accessorKey: 'donor_name',
+        cell: ({ row }) => {
+            const donor = row.original;
+            return donor.donor_type === 'Institution' ? donor.institution_name : donor.donor_name;
+          }
+    },
         {header: 'Phone', accessorKey: 'phone'},
         {header: 'Donor Type', accessorKey: 'donor_type'},
         {header: 'Category', accessorKey: 'category'},
@@ -73,16 +79,12 @@ const Page = () => {
         {header: 'Representative', accessorKey: 'representative'},
     ];
 
-    const fetchData = useCallback(async ({ pageIndex, pageSize }) => {
+    const fetchData = useCallback(async () => {
         setIsLoading(true);
-        const startRange = pageIndex * pageSize;
-        const endRange = startRange + pageSize - 1;
-
         try {
             let query = supabase
                 .from('donors')
-                .select('*', { count: 'exact' })
-                .range(startRange, endRange)
+                .select('*')  // Remove count and range
                 .order('last_donation_date', { ascending: false });
 
             // Apply filters
@@ -111,12 +113,12 @@ const Page = () => {
                 query = query.eq('category', filters.category);
             }
 
-            const { data, error, count } = await query;
+            const { data, error } = await query;
 
             if (error) throw error;
 
             setDonors(data);
-            setTotalCount(count);
+            setTotalCount(data.length);
         } catch (error) {
             console.error('Error fetching donors:', error);
         } finally {
@@ -125,7 +127,7 @@ const Page = () => {
     }, [filters]);
 
     useEffect(() => {
-        fetchData({ pageIndex: 0, pageSize: 10 });
+        fetchData();
     }, [fetchData]);
 
     const handleExport = async () => {
@@ -238,11 +240,10 @@ const Page = () => {
                     <PaginatedTable
                         columns={columns}
                         data={donors}
-                        fetchData={fetchData}
-                        totalCount={totalCount}
                         isLoading={isLoading}
                         searchText="Search donors..."
                         searchColumn="donor_name"
+                        isPagination={true}  // This will show all rows but still allow sorting and filtering
                     />
                 </CardContent>
             </Card>
