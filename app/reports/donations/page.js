@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import PaginatedTable from "@/components/customComponents/PaginatedTable";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from '@/lib/supabase';
 import { MoreHorizontal, Eye, Edit, Trash2, Printer, X } from "lucide-react";

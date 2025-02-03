@@ -195,15 +195,18 @@ const AddDonation = () => {
 
     const donationData = {
       donor_id: selectedDonor.id,
-      donor_name: `${selectedDonor.donor_name}`,
-      date: format(data.date, "yyyy-MM-dd"), // Format the date
+      // Update donor_name to use the correct name based on donor type
+      donor_name: selectedDonor.donor_type === 'Institution' 
+        ? selectedDonor.institution_name 
+        : selectedDonor.donor_name,
+      date: format(data.date, "yyyy-MM-dd"),
       payment_type: data.paymentType,
       amount: parseFloat(data.amount),
       receipt_no: lastReceiptNo,
       transaction_number: data.transactionNumber ? Number(data.transactionNumber) : null,
       cheque_number: data.chequeNumber ? Number(data.chequeNumber) : null,
-      purpose: data.purposes, // Now saving as an array
-      organization: data.organization, // Add the organization
+      purpose: data.purposes,
+      organization: data.organization,
     };
 
     toast.promise(

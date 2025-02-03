@@ -116,7 +116,7 @@ ${org.country} - ${org.pincode}`;
         <div className="space-y-4 mb-6">
           <div className="flex">
             <p className="w-1/3"><strong>Received From:</strong></p>
-            <p className="w-2/3">{donation.donor?.donor_name}</p>
+            <p className="w-2/3">{donation.donor?.donor_name ? donation.donor?.institution_name : donation.donor?.donor_name }</p>
           </div>
           <div className="flex">
             <p className="w-1/3"><strong>Payment Method:</strong></p>

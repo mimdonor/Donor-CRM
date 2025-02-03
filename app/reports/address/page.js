@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import PaginatedTable from "@/components/customComponents/PaginatedTable";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -33,10 +34,10 @@ const Page = () => {
         donorName: "",
         city: "",
         state: "",
-        donorType: "",
-        donorSource: "",
-        donorZone: "",
-        representative: "",
+        donorType: "all",     // Set default to "all"
+        donorSource: "all",   // Set default to "all"
+        donorZone: "all",     // Set default to "all"
+        representative: "all", // Set default to "all"
     });
 
     const { permissions, user } = usePermissions();
@@ -83,45 +84,14 @@ const Page = () => {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            let query = supabase
+            const { data, error } = await supabase
                 .from("donors")
-                .select("*")  // Remove count and range
-                .order("donor_number", { ascending: true });
-
-            // Apply filters
-            if (filters.startDate) {
-                query = query.gte('created_at', filters.startDate.toISOString());
-            }
-            if (filters.endDate) {
-                query = query.lte('created_at', filters.endDate.toISOString());
-            }
-            if (filters.donorName) {
-                query = query.or(`donor_name.ilike.%${filters.donorName}%,institution_name.ilike.%${filters.donorName}%`);
-            }
-            if (filters.city) {
-                query = query.ilike("city", `%${filters.city}%`);
-            }
-            if (filters.state) {
-                query = query.ilike("state", `%${filters.state}%`);
-            }
-            if (filters.donorType) {
-                query = query.eq("donor_type", filters.donorType);
-            }
-            if (filters.donorSource) {
-                query = query.eq("donor_source", filters.donorSource);
-            }
-            if (filters.donorZone) {
-                query = query.eq("donor_zone", filters.donorZone);
-            }
-            if (filters.representative) {
-                query = query.eq("representative", filters.representative);
-            }
-
-            const { data, error } = await query;
+                .select("*");  // Removed order to test if data is being fetched
 
             if (error) throw error;
 
-            // Transform the data to handle institution names
+            console.log("Fetched data:", data); // Add this debug log
+
             const transformedData = data.map(donor => ({
                 ...donor,
                 display_name: donor.donor_type === 'Institution' ? donor.institution_name : donor.donor_name
@@ -147,10 +117,10 @@ const Page = () => {
             donorName: "",
             city: "",
             state: "",
-            donorType: "",
-            donorSource: "",
-            donorZone: "",
-            representative: "",
+            donorType: "all",     // Set default to "all"
+            donorSource: "all",   // Set default to "all"
+            donorZone: "all",     // Set default to "all"
+            representative: "all", // Set default to "all"
         });
     };
 
@@ -310,127 +280,159 @@ const Page = () => {
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-4">
-                            <Input
-                                placeholder="Donor Name"
-                                value={filters.donorName}
-                                onChange={(e) =>
-                                    setFilters((prev) => ({
-                                        ...prev,
-                                        donorName: e.target.value,
-                                    }))
-                                }
-                                className="w-[200px]"
-                            />
-                            <Input
-                                placeholder="City"
-                                value={filters.city}
-                                onChange={(e) =>
-                                    setFilters((prev) => ({
-                                        ...prev,
-                                        city: e.target.value,
-                                    }))
-                                }
-                                className="w-[200px]"
-                            />
-                            <Input
-                                placeholder="State"
-                                value={filters.state}
-                                onChange={(e) =>
-                                    setFilters((prev) => ({
-                                        ...prev,
-                                        state: e.target.value,
-                                    }))
-                                }
-                                className="w-[200px]"
-                            />
-                            <Select
-                                value={filters.donorType}
-                                onValueChange={(value) =>
-                                    setFilters((prev) => ({
-                                        ...prev,
-                                        donorType: value === "all" ? "" : value,
-                                    }))
-                                }
-                            >
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Donor Type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All</SelectItem>
-                                    {dropdownOptions.donorTypes.map((type) => (
-                                        <SelectItem key={type.id} value={type.name}>
-                                            {type.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select
-                                value={filters.donorSource}
-                                onValueChange={(value) =>
-                                    setFilters((prev) => ({
-                                        ...prev,
-                                        donorSource: value === "all" ? "" : value,
-                                    }))
-                                }
-                            >
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Donor Source" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All</SelectItem>
-                                    {dropdownOptions.donorSources.map((source) => (
-                                        <SelectItem key={source.id} value={source.name}>
-                                            {source.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select
-                                value={filters.donorZone}
-                                onValueChange={(value) =>
-                                    setFilters((prev) => ({
-                                        ...prev,
-                                        donorZone: value === "all" ? "" : value,
-                                    }))
-                                }
-                            >
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Donor Zone" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All</SelectItem>
-                                    {dropdownOptions.donorZones.map((zone) => (
-                                        <SelectItem key={zone.id} value={zone.name}>
-                                            {zone.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select
-                                value={filters.representative}
-                                onValueChange={(value) =>
-                                    setFilters((prev) => ({
-                                        ...prev,
-                                        representative: value === "all" ? "" : value,
-                                    }))
-                                }
-                            >
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Representative" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All</SelectItem>
-                                    {dropdownOptions.representatives.map((rep) => (
-                                        <SelectItem key={rep.id} value={rep.name}>
-                                            {rep.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Button variant="outline" onClick={resetFilters}>
-                                <X className="mr-2 h-4 w-4" />
-                                Reset Filters
-                            </Button>
+                            <div className="space-y-2 w-[200px]">
+                                <Label htmlFor="donorName">Donor Name</Label>
+                                <Input
+                                    id="donorName"
+                                    placeholder="Search donor name"
+                                    value={filters.donorName}
+                                    onChange={(e) =>
+                                        setFilters((prev) => ({
+                                            ...prev,
+                                            donorName: e.target.value,
+                                        }))
+                                    }
+                                />
+                            </div>
+                            <div className="space-y-2 w-[200px]">
+                                <Label htmlFor="city">City</Label>
+                                <Input
+                                    id="city"
+                                    placeholder="Search city"
+                                    value={filters.city}
+                                    onChange={(e) =>
+                                        setFilters((prev) => ({
+                                            ...prev,
+                                            city: e.target.value,
+                                        }))
+                                    }
+                                />
+                            </div>
+                            <div className="space-y-2 w-[200px]">
+                                <Label htmlFor="state">State</Label>
+                                <Input
+                                    id="state"
+                                    placeholder="Search state"
+                                    value={filters.state}
+                                    onChange={(e) =>
+                                        setFilters((prev) => ({
+                                            ...prev,
+                                            state: e.target.value,
+                                        }))
+                                    }
+                                />
+                            </div>
+                            <div className="space-y-2 w-[180px]">
+                                <Label htmlFor="donorType">Donor Type</Label>
+                                <Select
+                                    id="donorType"
+                                    value={filters.donorType}
+                                    onValueChange={(value) =>
+                                        setFilters((prev) => ({
+                                            ...prev,
+                                            donorType: value,
+                                        }))
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All</SelectItem>
+                                        {dropdownOptions.donorTypes.map((type) => (
+                                            <SelectItem key={type.id} value={type.name}>
+                                                {type.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2 w-[180px]">
+                                <Label htmlFor="donorSource">Donor Source</Label>
+                                <Select
+                                    id="donorSource"
+                                    value={filters.donorSource}
+                                    onValueChange={(value) =>
+                                        setFilters((prev) => ({
+                                            ...prev,
+                                            donorSource: value,
+                                        }))
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All</SelectItem>
+                                        {dropdownOptions.donorSources.map((source) => (
+                                            <SelectItem key={source.id} value={source.name}>
+                                                {source.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2 w-[180px]">
+                                <Label htmlFor="donorZone">Donor Zone</Label>
+                                <Select
+                                    id="donorZone"
+                                    value={filters.donorZone}
+                                    onValueChange={(value) =>
+                                        setFilters((prev) => ({
+                                            ...prev,
+                                            donorZone: value,
+                                        }))
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All</SelectItem>
+                                        {dropdownOptions.donorZones.map((zone) => (
+                                            <SelectItem key={zone.id} value={zone.name}>
+                                                {zone.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2 w-[180px]">
+                                <Label htmlFor="representative">Representative</Label>
+                                <Select
+                                    id="representative"
+                                    value={filters.representative}
+                                    onValueChange={(value) =>
+                                        setFilters((prev) => ({
+                                            ...prev,
+                                            representative: value,
+                                        }))
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All</SelectItem>
+                                        {dropdownOptions.representatives.map((rep) => (
+                                            <SelectItem key={rep.id} value={rep.name}>
+                                                {rep.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2 w-[180px]">
+                                <Label>&nbsp;</Label> {/* Empty label to maintain alignment */}
+                                <Button 
+                                    variant="outline" 
+                                    onClick={resetFilters}
+                                    className="w-full" // Make button full width of container
+                                >
+                                    <X className="mr-2 h-4 w-4" />
+                                    Reset Filters
+                                </Button>
+                            </div>
                         </div>
                     </div>
 
@@ -441,7 +443,7 @@ const Page = () => {
                         isExportButton={donorPermissions.canAdd || donorPermissions.canEdit}
                         searchText="Search donors..."
                         searchColumn="donor_name"
-                        isPagination={false}  // This will show all rows but still allow sorting and filtering
+                        isPagination={true}  // This will show all rows but still allow sorting and filtering
                     />
                     {
                         reportsPermissions.canPrint && (
