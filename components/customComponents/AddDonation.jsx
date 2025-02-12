@@ -23,13 +23,14 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { toast, Toaster } from 'react-hot-toast';
+import { Textarea } from "@/components/ui/textarea";
 
 const donorTypes = [
   { value: 'Individual', label: 'Individual' },
   { value: 'Institution', label: 'Institution' },
 ];
 
-const AddDonation = () => {
+const AddDonation = ({ donationId }) => {
   const { register, handleSubmit, control, watch, reset, setValue, getValues, formState: { errors } } = useForm();
   const [searchBy, setSearchBy] = useState("name");
   const paymentType = watch("paymentType");
@@ -49,25 +50,41 @@ const AddDonation = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchDonors();
-    fetchPurposes();
-    fetchLastReceiptNo();
-    fetchOrganizations();
-  }, []);
+    const initializeForm = async () => {
+      await Promise.all([
+        fetchDonors(),
+        fetchPurposes(),
+        fetchLastReceiptNo(),
+        fetchOrganizations()
+      ]);
+      
+      if (donationId) {
+        fetchDonationDetails();
+      }
+    };
+
+    initializeForm();
+  }, [donationId]);
 
   useEffect(() => {
-    if (selectedOrganization) {
-      const filtered = purposes.filter(purpose => purpose.organization === selectedOrganization);
+    if (selectedOrganization && purposes.length > 0) {
+      // Filter purposes based on selected organization
+      const filtered = purposes.filter(purpose => 
+        purpose.organization === selectedOrganization
+      );
       setFilteredPurposes(filtered);
-      
-      // Update purposes based on the current donor and new organization
-      if (selectedDonorId) {
-        handleDonorChange(selectedDonorId, selectedOrganization);
-      } else {
-        setValue('purposes', []);
-      }
+      console.log('Organization changed to:', selectedOrganization);
+      console.log('Filtered purposes:', filtered);
     }
-  }, [selectedOrganization, purposes, setValue, selectedDonorId]);
+  }, [selectedOrganization, purposes]);
+
+  // Add this debug effect near other useEffect hooks
+  useEffect(() => {
+    const subscription = watch((value) => {
+      console.log('Form values changed:', value);
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   const fetchDonors = async () => {
     const { data, error } = await supabase
@@ -90,16 +107,24 @@ const AddDonation = () => {
   };
 
   const fetchPurposes = async () => {
-    const { data, error } = await supabase
-      .from("purposes_dropdown")
-      .select("name, organization")
-      .order("name", { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from("purposes_dropdown")
+        .select("*")
+        .eq('status', true);
 
-    if (error) {
+      if (error) throw error;
+      
+      setPurposes(data);
+      
+      // If organization is already selected, filter purposes immediately
+      if (selectedOrganization) {
+        const filtered = data.filter(p => p.organization === selectedOrganization);
+        setFilteredPurposes(filtered);
+      }
+    } catch (error) {
       console.error("Error fetching purposes:", error);
       setError("Failed to fetch purposes");
-    } else {
-      setPurposes(data);
     }
   };
 
@@ -129,6 +154,47 @@ const AddDonation = () => {
       setError("Failed to fetch organizations");
     } else {
       setOrganizations(data.map(org => ({ value: org.name, label: org.name })));
+    }
+  };
+
+  const fetchDonationDetails = async () => {
+    try {
+      const { data: donation, error } = await supabase
+        .from('donations')
+        .select('*')
+        .eq('id', donationId)
+        .single();
+
+      if (error) throw error;
+
+      // Set organization first
+      setValue('organization', donation.organization);
+      
+      // Filter purposes immediately
+      const filtered = purposes.filter(p => p.organization === donation.organization);
+      setFilteredPurposes(filtered);
+
+      // Then set other form values (remove remarks)
+      reset({
+        organization: donation.organization,
+        donor: donation.donor_id.toString(),
+        date: new Date(donation.date),
+        purposes: Array.isArray(donation.purpose) ? donation.purpose : [donation.purpose],
+        paymentType: donation.payment_type,
+        amount: donation.amount?.toString(),
+        ...(donation.payment_type === 'Online' && {
+          transactionNumber: donation.transaction_number?.toString()
+        }),
+        ...(donation.payment_type === 'Cheque' && {
+          chequeNumber: donation.cheque_number?.toString()
+        })
+      });
+
+      await fetchPurposes();
+
+    } catch (error) {
+      console.error('Error fetching donation:', error);
+      setError('Failed to fetch donation details');
     }
   };
 
@@ -163,22 +229,23 @@ const AddDonation = () => {
       setSelectedDonor(data);
       const filteredPurposesForOrg = purposes.filter(purpose => purpose.organization === org);
       
-      if (data.category === 'Regular' && Array.isArray(data.purposes)) {
-        // Filter purposes to only include those matching the selected organization
-        const validPurposes = data.purposes.filter(purpose => 
-          filteredPurposesForOrg.some(fp => fp.name === purpose)
-        );
-        setValue('purposes', validPurposes);
-        setValue('amount', data.commitment || '');
-      } else {
-        // For non-regular donors, keep existing purposes if they're valid for the new organization
-        const currentPurposes = getValues('purposes');
-        const validPurposes = currentPurposes.filter(purpose => 
-          filteredPurposesForOrg.some(fp => fp.name === purpose)
-        );
-        setValue('purposes', validPurposes);
-        setValue('amount', '');
+      // Don't override amount if we're in edit mode
+      if (!donationId) {
+        if (data.category === 'Regular' && Array.isArray(data.purposes)) {
+          setValue('amount', data.commitment?.toString() || '');
+        } else {
+          setValue('amount', '');
+        }
       }
+
+      // Update purposes
+      const validPurposes = data.category === 'Regular' && Array.isArray(data.purposes)
+        ? data.purposes.filter(purpose => 
+            filteredPurposesForOrg.some(fp => fp.name === purpose)
+          )
+        : getValues('purposes');
+      
+      setValue('purposes', validPurposes);
     }
   };
 
@@ -195,7 +262,6 @@ const AddDonation = () => {
 
     const donationData = {
       donor_id: selectedDonor.id,
-      // Update donor_name to use the correct name based on donor type
       donor_name: selectedDonor.donor_type === 'Institution' 
         ? selectedDonor.institution_name 
         : selectedDonor.donor_name,
@@ -203,36 +269,41 @@ const AddDonation = () => {
       payment_type: data.paymentType,
       amount: parseFloat(data.amount),
       receipt_no: lastReceiptNo,
-      transaction_number: data.transactionNumber ? Number(data.transactionNumber) : null,
-      cheque_number: data.chequeNumber ? Number(data.chequeNumber) : null,
+      ...(data.paymentType === 'Online' && data.transactionNumber ? 
+        { transaction_number: Number(data.transactionNumber) } : {}),
+      ...(data.paymentType === 'Cheque' && data.chequeNumber ? 
+        { cheque_number: Number(data.chequeNumber) } : {}),
       purpose: data.purposes,
       organization: data.organization,
     };
 
     toast.promise(
       (async () => {
-        const { data: insertedDonation, error: donationError } = await supabase
-          .from('donations')
-          .insert(donationData)
-          .single();
+        let result;
+        if (donationId) {
+          // Update existing donation
+          result = await supabase
+            .from('donations')
+            .update(donationData)
+            .eq('id', donationId);
+        } else {
+          // Insert new donation
+          result = await supabase
+            .from('donations')
+            .insert(donationData)
+            .single();
+        }
 
-        if (donationError) throw donationError;
-
-        const { error: donorUpdateError } = await supabase
-          .from('donors')
-          .update({ last_donation_date: donationData.date })
-          .eq('id', selectedDonor.id);
-
-        if (donorUpdateError) throw donorUpdateError;
+        if (result.error) throw result.error;
 
         reset();
         setIsSubmitting(false);
-        return "Donation added successfully";
+        return donationId ? "Donation updated successfully" : "Donation added successfully";
       })(),
       {
-        loading: "Adding donation...",
+        loading: donationId ? "Updating donation..." : "Adding donation...",
         success: (message) => message,
-        error: (error) => `Failed to add donation: ${error.message}`,
+        error: (error) => `Failed to ${donationId ? 'update' : 'add'} donation: ${error.message}`,
       }
     ).then(() => {
       router.push('/donations');
@@ -244,7 +315,7 @@ const AddDonation = () => {
       <Toaster position="top-center" reverseOrder={false} />
       <CardHeader>
         <div className="w-full flex justify-between items-center">
-          <CardTitle className="text-2xl">Add Donation</CardTitle>
+          <CardTitle className="text-2xl">{donationId ? 'Edit' : 'Add'} Donation</CardTitle>
           <p className="flex gap-2 items-center text-sm text-gray-500">
             Receipt No - 
             <span className="bg-[#F3E6D5] text-[#6C665F]text-sm px-2 py-1 rounded-md">
@@ -267,7 +338,9 @@ const AddDonation = () => {
                   <Select 
                     onValueChange={(value) => {
                       field.onChange(value);
-                      setFilteredPurposes([]);
+                      const filtered = purposes.filter(p => p.organization === value);
+                      console.log('Filtered purposes for org:', value, filtered);
+                      setFilteredPurposes(filtered);
                     }} 
                     value={field.value}
                   >
@@ -276,7 +349,9 @@ const AddDonation = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {organizations.map((org) => (
-                        <SelectItem key={org.value} value={org.value}>{org.label}</SelectItem>
+                        <SelectItem key={org.value} value={org.value}>
+                          {org.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -376,16 +451,20 @@ const AddDonation = () => {
                   <MultiSelect
                     options={filteredPurposes.map(p => ({ 
                       value: p.name, 
-                      label: p.name
+                      label: p.name 
                     }))}
                     selected={field.value || []}
                     onChange={(selected) => {
-                      const validSelected = selected.filter(s => 
-                        filteredPurposes.some(fp => fp.name === s)
-                      );
-                      field.onChange(validSelected);
+                      console.log('Selected purposes:', selected);
+                      field.onChange(selected);
                     }}
-                    placeholder="Select Purposes"
+                    placeholder={
+                      !selectedOrganization 
+                        ? "Please select an organization first"
+                        : filteredPurposes.length === 0 
+                          ? "No purposes found for this organization" 
+                          : "Select Purposes"
+                    }
                   />
                 )}
               />

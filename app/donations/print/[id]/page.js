@@ -156,7 +156,7 @@ ${org.country} - ${org.pincode}`;
                 <div className="space-y-4 mb-6">
                     <div className="flex">
                         <p className="w-1/3"><strong>Received From:</strong></p>
-                        <p className="w-2/3">{donation.donor?.donor_name}</p>
+                        <p className="w-2/3">{donation.donor?.donor_name ? donation.donor?.institution_name : donation.donor?.donor_name }</p>
                     </div>
                     <div className="flex">
                         <p className="w-1/3"><strong>Payment Method:</strong></p>
@@ -170,19 +170,19 @@ ${org.country} - ${org.pincode}`;
                         <p className="w-1/3"><strong>Amount:</strong></p>
                         <p className="w-2/3">Rs. {donation.amount.toFixed(2)}</p>
                     </div>
-                    <div className="flex">
+                    {/* <div className="flex">
                         <p className="w-1/3"><strong>Remarks:</strong></p>
                         <p className="w-2/3">{donation.remarks || 'N/A'}</p>
-                    </div>
+                    </div> */}
                 </div>
 
-                <div className="flex justify-end mb-12">
+                {/* <div className="flex justify-end mb-12">
                     <div className="w-1/3">
                         <div className="border-t border-black pt-2">
                             <p className="text-center">Authorized Signature</p>
                         </div>
                     </div>
-                </div>
+                </div> */}
 
                 <div className="bg-gray-100 p-4 text-center">
                     <p className="font-semibold">Thank you for your generous donation!</p>

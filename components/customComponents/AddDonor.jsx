@@ -33,7 +33,7 @@ const RequiredLabel = ({ htmlFor, children }) => (
 );
 
 export default function AddDonor({ donorId }) {
-  const { register, handleSubmit, control, watch, formState: { errors }, reset, setValue, getValues } = useForm();
+  const { register, handleSubmit, control, watch, formState: { errors }, reset, setValue, getValues, clearErrors } = useForm();
   const [dropdownOptions, setDropdownOptions] = useState({
     donorSources: [],
     representatives: [],
@@ -224,71 +224,114 @@ export default function AddDonor({ donorId }) {
     setValue('city', city.name, { shouldValidate: true });
   };
 
+  const checkPhoneNumber = async (phoneNumber) => {
+    if (!phoneNumber) return true;
+
+    try {
+      const { data, error } = await supabase
+        .from('donors')
+        .select('id, donor_name, phone')
+        .eq('phone', phoneNumber);
+
+      if (error) throw error;
+
+      // If editing, exclude the current donor from the check
+      if (isEditing) {
+        const otherDonors = data.filter(donor => donor.id !== parseInt(donorId));
+        if (otherDonors.length > 0) {
+          toast.error(`Phone number already exists for donor: ${otherDonors[0].donor_name}`);
+          return false;
+        }
+      } else if (data.length > 0) {
+        toast.error(`Phone number already exists for donor: ${data[0].donor_name}`);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error checking phone number:', error);
+      return false;
+    }
+  };
+
   const onSubmit = async (data) => {
     setIsSubmitting(true);
 
-    const selectedZone = dropdownOptions.donorZones.find(zone => zone.name === data.donorZone);
-    const donorData = {
-      donor_number: donorId ? donorNumber : lastDonorId,
-      donor_name: `${data.firstName} ${data.lastName}`,
-      institution_name: data.donorType === 'Institution' ? data.institutionName : '',
-      phone: data.phone,
-      street_name: data.streetName,
-      area_name: data.areaName,
-      landmark: data.landmark,
-      city: selectedCity.name,
-      state: selectedState.name,
-      country: selectedCountry.name,
-      pincode: Number(data.pincode),
-      donor_source: data.donorSource,
-      representative: data.representative,
-      donor_zone: data.donorZone,
-      donor_zone_state: selectedZone?.state,
-      donor_zone_district: selectedZone?.district,
-      donor_type: data.donorType,
-      category: data.category,
-      purposes: data.purposes ? `{${data.purposes.join(',')}}` : null, // Format as Postgres array
-      commitment: data.commitment ? parseFloat(data.commitment) : null,
-      pan_number: data.panNumber,
-      is_magazine_subscribed: data.isMagazineSubscribed || false,
-    };
-
-    // Concatenate contact person title and name for institutions
-    if (data.donorType === 'Institution') {
-      donorData.contact_person = `${data.contactPersonTitle} ${data.contactPersonName}`.trim();
-    }
-
-    toast.promise(
-      (async () => {
-        let result;
-        if (isEditing) {
-          result = await supabase
-            .from('donors')
-            .update(donorData)
-            .eq('id', donorId);
-        } else {
-          result = await supabase
-            .from('donors')
-            .insert([donorData])
-            .select();
-        }
-
-        if (result.error) {
-          throw new Error(result.error.message);
-        }
-
-        reset();
+    try {
+      // Check phone number before submitting
+      const isPhoneValid = await checkPhoneNumber(data.phone);
+      if (!isPhoneValid) {
         setIsSubmitting(false);
-        return isEditing ? "Donor updated successfully" : "Donor added successfully";
-      })(),
-      {
-        loading: isEditing ? "Updating donor..." : "Adding donor...",
-        success: (message) => message,
-        error: (error) => `Failed to ${isEditing ? 'update' : 'add'} donor: ${error.message}`,
+        return;
       }
-    ).then(() => {
-      router.push('/donors');
-    });
+
+      const selectedZone = dropdownOptions.donorZones.find(zone => zone.name === data.donorZone);
+      const donorData = {
+        donor_number: donorId ? donorNumber : lastDonorId,
+        donor_name: `${data.firstName} ${data.lastName}`,
+        institution_name: data.donorType === 'Institution' ? data.institutionName : '',
+        phone: data.phone,
+        street_name: data.streetName,
+        area_name: data.areaName,
+        landmark: data.landmark,
+        city: selectedCity.name,
+        state: selectedState.name,
+        country: selectedCountry.name,
+        pincode: Number(data.pincode),
+        donor_source: data.donorSource,
+        representative: data.representative,
+        donor_zone: data.donorZone,
+        donor_zone_state: selectedZone?.state,
+        donor_zone_district: selectedZone?.district,
+        donor_type: data.donorType,
+        category: data.category,
+        purposes: data.purposes ? `{${data.purposes.join(',')}}` : null, // Format as Postgres array
+        commitment: data.commitment ? parseFloat(data.commitment) : null,
+        pan_number: data.panNumber,
+        is_magazine_subscribed: data.isMagazineSubscribed || false,
+      };
+
+      // Concatenate contact person title and name for institutions
+      if (data.donorType === 'Institution') {
+        donorData.contact_person = `${data.contactPersonTitle} ${data.contactPersonName}`.trim();
+      }
+
+      toast.promise(
+        (async () => {
+          let result;
+          if (isEditing) {
+            result = await supabase
+              .from('donors')
+              .update(donorData)
+              .eq('id', donorId);
+          } else {
+            result = await supabase
+              .from('donors')
+              .insert([donorData])
+              .select();
+          }
+
+          if (result.error) {
+            throw new Error(result.error.message);
+          }
+
+          reset();
+          setIsSubmitting(false);
+          return isEditing ? "Donor updated successfully" : "Donor added successfully";
+        })(),
+        {
+          loading: isEditing ? "Updating donor..." : "Adding donor...",
+          success: (message) => message,
+          error: (error) => `Failed to ${isEditing ? 'update' : 'add'} donor: ${error.message}`,
+        }
+      ).then(() => {
+        router.push('/donors');
+      });
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast.error('Failed to submit form');
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -502,19 +545,28 @@ export default function AddDonor({ donorId }) {
                   <Controller
                     name="phone"
                     control={control}
-                    rules={{ required: "Phone Number is required" }}
+                    rules={{ 
+                      required: "Phone Number is required",
+                      validate: async value => await checkPhoneNumber(value) || "Phone number already exists"
+                    }}
                     render={({ field }) => (
                       <PhoneInput
                         defaultCountry="in"
                         value={field.value}
-                        onChange={(phone) => field.onChange(phone)}
+                        onChange={(phone) => {
+                          field.onChange(phone);
+                          // Clear any existing errors when the phone number changes
+                          if (errors.phone) {
+                            clearErrors('phone');
+                          }
+                        }}
                         className="w-full"
                         inputStyle={{
                           width: '100%',
                           height: '40px',
                           fontSize: '16px',
                           borderRadius: 'var(--radius)',
-                          border: '1px solid hsl(var(--input))',
+                          border: errors.phone ? '1px solid red' : '1px solid hsl(var(--input))',
                           backgroundColor: 'hsl(var(--background))',
                           color: 'hsl(var(--foreground))',
                         }}

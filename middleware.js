@@ -28,11 +28,11 @@ export async function middleware(req) {
     const permissions = roleData?.permissions;
 
     const url = req.nextUrl.clone();
-    if (url.pathname.startsWith('/donors') && !permissions.donorModule?.allowAccess) {
+    if (url.pathname.startsWith('/donors') && !permissions?.donorModule?.allowAccess) {
         return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
     }
 
-    if (url.pathname.startsWith('/donations') && !permissions.donationsModule?.allowAccess) {
+    if (url.pathname.startsWith('/donations') && !permissions?.donationsModule?.allowAccess) {
         return NextResponse.redirect(new URL('/dashboard', req.nextUrl));
     }
 
