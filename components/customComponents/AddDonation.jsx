@@ -167,6 +167,17 @@ const AddDonation = ({ donationId }) => {
 
       if (error) throw error;
 
+      // Fetch donor using donor_id (which is now donor_number)
+      const { data: donorData, error: donorError } = await supabase
+        .from('donors')
+        .select('*')
+        .eq('donor_number', donation.donor_id)
+        .single();
+
+      if (donorError) throw donorError;
+
+      console.log('Fetched donor:', donorData);
+
       // Set organization first
       setValue('organization', donation.organization);
       
@@ -174,10 +185,10 @@ const AddDonation = ({ donationId }) => {
       const filtered = purposes.filter(p => p.organization === donation.organization);
       setFilteredPurposes(filtered);
 
-      // Then set other form values (remove remarks)
+      // Then set other form values
       reset({
         organization: donation.organization,
-        donor: donation.donor_id.toString(),
+        donor: donorData.id.toString(), // Use donor's ID for the form
         date: new Date(donation.date),
         purposes: Array.isArray(donation.purpose) ? donation.purpose : [donation.purpose],
         paymentType: donation.payment_type,
@@ -190,6 +201,7 @@ const AddDonation = ({ donationId }) => {
         })
       });
 
+      setSelectedDonor(donorData);
       await fetchPurposes();
 
     } catch (error) {
@@ -261,7 +273,7 @@ const AddDonation = ({ donationId }) => {
     }
 
     const donationData = {
-      donor_id: selectedDonor.id,
+      donor_id: selectedDonor.donor_number, // Use donor_number for storage
       donor_name: selectedDonor.donor_type === 'Institution' 
         ? selectedDonor.institution_name 
         : selectedDonor.donor_name,
@@ -393,6 +405,7 @@ const AddDonation = ({ donationId }) => {
                     <Select
                       onValueChange={(value) => {
                         field.onChange(value);
+                        console.log('Selected donor:', value);
                         handleDonorChange(value);
                       }}
                       value={field.value}

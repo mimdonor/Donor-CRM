@@ -12,6 +12,7 @@ export default function PrintDonation() {
     const [donation, setDonation] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isPrinting, setIsPrinting] = useState(false);
+    const [receiptData, setReceiptData] = useState(false);
     const [purposes, setPurposes] = useState([]);
     const [organization, setOrganization] = useState(null);
 
@@ -56,7 +57,7 @@ export default function PrintDonation() {
                 const { data: donorData, error: donorError } = await supabase
                     .from("donors")
                     .select("*")
-                    .eq("id", donationData.donor_id)
+                    .eq("donor_number", donationData.donor_id)
                     .single();
 
                 if (donorError) throw donorError;
@@ -73,6 +74,18 @@ export default function PrintDonation() {
                 if (orgError) throw orgError;
 
                 setOrganization(orgData);
+
+
+                const {data: receiptData, error: receiptError} = await supabase
+                .from('receipt_message')
+                .select('message')
+                .single();
+        
+                if (receiptData) {
+                  setReceiptData(receiptData);
+                }
+
+                
             }
         } catch (error) {
             console.error("Error fetching donation:", error);
@@ -156,7 +169,7 @@ ${org.country} - ${org.pincode}`;
                 <div className="space-y-4 mb-6">
                     <div className="flex">
                         <p className="w-1/3"><strong>Received From:</strong></p>
-                        <p className="w-2/3">{donation.donor?.donor_name ? donation.donor?.institution_name : donation.donor?.donor_name }</p>
+                        <p className="w-2/3">{donation.donor?.institution_name ? donation.donor?.institution_name : donation.donor?.donor_name }</p>
                     </div>
                     <div className="flex">
                         <p className="w-1/3"><strong>Payment Method:</strong></p>
@@ -185,9 +198,8 @@ ${org.country} - ${org.pincode}`;
                 </div> */}
 
                 <div className="bg-gray-100 p-4 text-center">
-                    <p className="font-semibold">Thank you for your generous donation!</p>
                     <p className="text-sm italic mt-2">
-                        "There shall be showers for blessings" - Ezekiel 34:6
+                        {receiptData.message}
                     </p>
                 </div>
             </Card>

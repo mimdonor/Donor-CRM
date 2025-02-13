@@ -25,6 +25,8 @@ import ImportExcelModal from './ImportExcelModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { usePermissions } from "@/context/PermissionsProvider";
+import { Textarea } from "@/components/ui/textarea";
+import toast from 'react-hot-toast';
 
 const Donations = () => {
   const router = useRouter();
@@ -42,6 +44,10 @@ const Donations = () => {
   const [isSending, setIsSending] = useState(false);
   const { permissions, user } = usePermissions();
   const donationsPermissions = permissions?.donationsModule || {};
+  const [isReceiptMessageModalOpen, setIsReceiptMessageModalOpen] = useState(false);
+  const [receiptMessage, setReceiptMessage] = useState('');
+  const [isMessageSubmitting, setIsMessageSubmitting] = useState(false);
+  const [messageId, setMessageId] = useState(null);
 
   const handleView = useCallback((donation) => {
     router.push(`/donations/viewDonation/${donation.id}`);
@@ -152,6 +158,62 @@ const Donations = () => {
     }
   };
 
+  useEffect(() => {
+    fetchReceiptMessage();
+  }, []);
+
+  const fetchReceiptMessage = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('receipt_message')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (data) {
+        setReceiptMessage(data.message);
+        setMessageId(data.id);
+      }
+    } catch (error) {
+      console.error('Error fetching receipt message:', error);
+    }
+  };
+
+  const handleAddReceiptMessage = async () => {
+    setIsMessageSubmitting(true);
+    try {
+      let result;
+      if (messageId) {
+        result = await supabase
+          .from('receipt_message')
+          .update({ message: receiptMessage })
+          .eq('id', messageId);
+      } else {
+        result = await supabase
+          .from('receipt_message')
+          .insert([{ message: receiptMessage }])
+          .select();
+      }
+
+      if (result.error) throw result.error;
+
+      toast.success(messageId ? 'Receipt message updated successfully' : 'Receipt message added successfully');
+      setIsReceiptMessageModalOpen(false);
+      
+      if (!messageId && result.data?.[0]?.id) {
+        setMessageId(result.data[0].id);
+      }
+    } catch (error) {
+      console.error('Error saving receipt message:', error);
+      toast.error('Failed to save receipt message');
+    } finally {
+      setIsMessageSubmitting(false);
+    }
+  };
+
   const columns = [
     {header: 'Donor ID', accessorKey: 'donor_id'},
     {header: 'Donor Name', accessorKey: 'donor_name'},
@@ -243,13 +305,21 @@ const Donations = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold">Donations List</h2>
         <div className="space-x-2 flex items-center">
+        {donationsPermissions.canAdd && (
+            <Link href="/donations/addDonation">
+              <Button className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]">Add Donation</Button>
+            </Link>
+          )}
           {donationsPermissions.canPrint && (
             <Button className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]" onClick={handlePrintReceipt}>Send Receipt</Button>
           )}
           {donationsPermissions.canAdd && (
-            <Link href="/donations/addDonation">
-              <Button className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]">Add Donation</Button>
-            </Link>
+              <Button 
+                className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]"
+                onClick={() => setIsReceiptMessageModalOpen(true)}
+              >
+                Add Receipt Message
+              </Button>
           )}
         </div>
       </div>
@@ -323,6 +393,33 @@ const Donations = () => {
               </Button>
               <Button onClick={() => setIsPrintModalOpen(false)} disabled={isSending}>
                 Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={isReceiptMessageModalOpen} onOpenChange={setIsReceiptMessageModalOpen}>
+          <DialogContent className="text-black">
+            <DialogHeader>
+              <DialogTitle>{messageId ? 'Update' : 'Add'} Receipt Message</DialogTitle>
+              <DialogDescription>
+                Enter the message to be displayed on receipts
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Textarea
+                value={receiptMessage}
+                onChange={(e) => setReceiptMessage(e.target.value)}
+                placeholder="Enter receipt message"
+                className="min-h-[100px]"
+              />
+            </div>
+            <DialogFooter>
+              <Button 
+                onClick={handleAddReceiptMessage} 
+                disabled={isMessageSubmitting || !receiptMessage.trim()}
+                className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]"
+              >
+                {isMessageSubmitting ? 'Submitting...' : messageId ? 'Update' : 'Submit'}
               </Button>
             </DialogFooter>
           </DialogContent>

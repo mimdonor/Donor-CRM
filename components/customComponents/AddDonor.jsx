@@ -148,40 +148,47 @@ export default function AddDonor({ donorId }) {
       setDonorNumber(data.donor_number);
       console.log('Fetched donor data:', data);
 
+      // Split the donor name correctly
+      let firstName = '', lastName = '';
+      if (data.donor_name) {
+        const nameParts = data.donor_name.trim().split(/\s+/);
+        firstName = nameParts[0] || '';
+        lastName = nameParts.slice(1).join(' ') || '';
+      }
+
       const formData = {
         donorNumber: data.donor_number,
-        firstName: data.donor_name.split(' ')[0],
-        lastName: data.donor_name.split(' ')[1] || '',
-        institutionName: data.institution_name,
-        phone: data.phone,
-        streetName: data.street_name,
-        areaName: data.area_name,
-        landmark: data.landmark,
-        city: data.city,
-        state: data.state,
-        country: data.country,
-        pincode: data.pincode,
-        donorSource: data.donor_source,
-        representative: data.representative,
-        donorZone: data.donor_zone,
-        donorType: data.donor_type,
-        category: data.category,
-        purposes: Array.isArray(data.purposes) ? data.purposes : data.purposes ? data.purposes.slice(1, -1).split(',') : [], // Parse Postgres array
-        commitment: data.commitment,
-        panNumber: data.pan_number,
-        isMagazineSubscribed: data.is_magazine_subscribed,
+        firstName: firstName,
+        lastName: lastName,
+        institutionName: data.institution_name || '',
+        phone: data.phone || '',
+        streetName: data.street_name || '',
+        areaName: data.area_name || '',
+        landmark: data.landmark || '',
+        city: data.city || '',
+        state: data.state || '',
+        country: data.country || '',
+        pincode: data.pincode || '',
+        donorSource: data.donor_source || '',
+        representative: data.representative || '',
+        donorZone: data.donor_zone || '',
+        donorType: data.donor_type || '',
+        category: data.category || '',
+        purposes: Array.isArray(data.purposes) ? data.purposes : data.purposes ? data.purposes.slice(1, -1).split(',') : [],
+        commitment: data.commitment?.toString() || '',
+        panNumber: data.pan_number || '',
+        isMagazineSubscribed: data.is_magazine_subscribed || false,
         contactPersonTitle: data.contact_person?.split(' ')[0] || '',
         contactPersonName: data.contact_person?.split(' ').slice(1).join(' ') || '',
       };
 
-      console.log('Form data to be set:', formData);
-
+      // Reset form with all values
       reset(formData);
 
-      // Set selected country, state, and city
+      // Set selected locations
       const country = Country.getAllCountries().find(c => c.name === data.country);
-      const state = State.getStatesOfCountry(country?.isoCode).find(s => s.name === data.state);
-      const city = City.getCitiesOfState(country?.isoCode, state?.isoCode).find(c => c.name === data.city);
+      const state = country ? State.getStatesOfCountry(country.isoCode).find(s => s.name === data.state) : null;
+      const city = state ? City.getCitiesOfState(country.isoCode, state.isoCode).find(c => c.name === data.city) : null;
 
       setSelectedCountry(country);
       setSelectedState(state);
@@ -189,13 +196,8 @@ export default function AddDonor({ donorId }) {
 
       // Force update of controlled inputs
       Object.keys(formData).forEach(key => {
-        const value = formData[key];
-        if (value) {
-          setValue(key, value, { shouldValidate: true });
-        }
+        setValue(key, formData[key]);
       });
-
-      console.log('Current form values:', getValues());
     }
   };
 
