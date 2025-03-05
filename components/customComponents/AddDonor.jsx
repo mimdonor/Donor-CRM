@@ -136,38 +136,51 @@ export default function AddDonor({ donorId }) {
   };
 
   const fetchDonorData = async () => {
-    const { data, error } = await supabase
-      .from('donors')
-      .select('*')
-      .eq('id', donorId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('donors')
+        .select('*')
+        .eq('id', donorId)
+        .single();
 
-    if (error) {
-      console.error('Error fetching donor data:', error);
-    } else {
+      if (error) throw error;
+
       setDonorNumber(data.donor_number);
       console.log('Fetched donor data:', data);
 
-      // Split the donor name correctly
-      let firstName = '', lastName = '';
-      if (data.donor_name) {
-        const nameParts = data.donor_name.trim().split(/\s+/);
-        firstName = nameParts[0] || '';
-        lastName = nameParts.slice(1).join(' ') || '';
+      // First set location data
+      const country = Country.getAllCountries().find(c => c.name === data.country);
+      let state = null;
+      let city = null;
+
+      if (country) {
+        setSelectedCountry(country);
+        
+        // Find state by name in the selected country
+        const states = State.getStatesOfCountry(country.isoCode);
+        state = states.find(s => s.name === data.state);
+        if (state) {
+          setSelectedState(state);
+          
+          // Find city by name in the selected state
+          const cities = City.getCitiesOfState(country.isoCode, state.isoCode);
+          city = cities.find(c => c.name === data.city);
+          if (city) {
+            setSelectedCity(city);
+          }
+        }
       }
 
+      // Set form data
       const formData = {
         donorNumber: data.donor_number,
-        firstName: firstName,
-        lastName: lastName,
+        firstName: data.donor_name.split(' ')[0],
+        lastName: data.donor_name.split(' ').slice(1).join(' '),
         institutionName: data.institution_name || '',
         phone: data.phone || '',
         streetName: data.street_name || '',
         areaName: data.area_name || '',
         landmark: data.landmark || '',
-        city: data.city || '',
-        state: data.state || '',
-        country: data.country || '',
         pincode: data.pincode || '',
         donorSource: data.donor_source || '',
         representative: data.representative || '',
@@ -180,24 +193,21 @@ export default function AddDonor({ donorId }) {
         isMagazineSubscribed: data.is_magazine_subscribed || false,
         contactPersonTitle: data.contact_person?.split(' ')[0] || '',
         contactPersonName: data.contact_person?.split(' ').slice(1).join(' ') || '',
+        country: country?.isoCode || '',
+        state: state?.isoCode || '',
+        city: city?.name || ''
       };
 
       // Reset form with all values
       reset(formData);
 
-      // Set selected locations
-      const country = Country.getAllCountries().find(c => c.name === data.country);
-      const state = country ? State.getStatesOfCountry(country.isoCode).find(s => s.name === data.state) : null;
-      const city = state ? City.getCitiesOfState(country.isoCode, state.isoCode).find(c => c.name === data.city) : null;
-
-      setSelectedCountry(country);
-      setSelectedState(state);
-      setSelectedCity(city);
-
       // Force update of controlled inputs
-      Object.keys(formData).forEach(key => {
-        setValue(key, formData[key]);
-      });
+      setValue('country', country?.isoCode || '', { shouldValidate: true });
+      setValue('state', state?.isoCode || '', { shouldValidate: true });
+      setValue('city', city?.name || '', { shouldValidate: true });
+
+    } catch (error) {
+      console.error('Error fetching donor data:', error);
     }
   };
 
@@ -212,18 +222,26 @@ export default function AddDonor({ donorId }) {
   };
 
   const handleStateChange = (stateCode) => {
+    if (!stateCode || !selectedCountry) return;
+    
     const state = State.getStateByCodeAndCountry(stateCode, selectedCountry.isoCode);
     if (state) {
       setSelectedState(state);
       setSelectedCity(null);
-      setValue('state', state.name, { shouldValidate: true });
+      setValue('state', state.isoCode, {shouldValidate: true});
+      setValue('city', '', {shouldValidate: true});
     }
   };
 
   const handleCityChange = (cityName) => {
-    const city = City.getAllCities().find(c => c.name === cityName && c.stateCode === selectedState.isoCode && c.countryCode === selectedCountry.isoCode);
-    setSelectedCity(city);
-    setValue('city', city.name, { shouldValidate: true });
+    if (!cityName || !selectedState || !selectedCountry) return;
+    
+    const cities = City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode);
+    const city = cities.find(c => c.name === cityName);
+    if (city) {
+      setSelectedCity(city);
+      setValue('city', city.name, {shouldValidate: true});
+    }
   };
 
   const checkPhoneNumber = async (phoneNumber) => {
@@ -627,16 +645,22 @@ export default function AddDonor({ donorId }) {
                     control={control}
                     rules={{ required: "State is required" }}
                     render={({ field }) => (
-                      <Select onValueChange={(value) => {
-                        field.onChange(value);
-                        handleStateChange(value);
-                      }} value={selectedState?.isoCode} disabled={!selectedCountry}>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          handleStateChange(value);
+                        }} 
+                        value={field.value}
+                        disabled={!selectedCountry}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select State" />
                         </SelectTrigger>
                         <SelectContent>
                           {selectedCountry && State.getStatesOfCountry(selectedCountry.isoCode).map((state) => (
-                            <SelectItem key={state.isoCode} value={state.isoCode}>{state.name}</SelectItem>
+                            <SelectItem key={state.isoCode} value={state.isoCode}>
+                              {state.name}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -651,17 +675,26 @@ export default function AddDonor({ donorId }) {
                     control={control}
                     rules={{ required: "City is required" }}
                     render={({ field }) => (
-                      <Select onValueChange={(value) => {
-                        field.onChange(value);
-                        handleCityChange(value);
-                      }} value={selectedCity?.name} disabled={!selectedState}>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          handleCityChange(value);
+                        }} 
+                        value={field.value}
+                        disabled={!selectedState}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select City" />
                         </SelectTrigger>
                         <SelectContent>
-                          {selectedState && City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode).map((city) => (
-                            <SelectItem key={city.name} value={city.name}>{city.name}</SelectItem>
-                          ))}
+                          {selectedState && selectedCountry && 
+                            City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode)
+                              .map((city) => (
+                                <SelectItem key={city.name} value={city.name}>
+                                  {city.name}
+                                </SelectItem>
+                              ))
+                          }
                         </SelectContent>
                       </Select>
                     )}
