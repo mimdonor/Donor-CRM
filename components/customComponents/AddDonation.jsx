@@ -48,6 +48,7 @@ const AddDonation = ({ donationId }) => {
   const [selectedDonor, setSelectedDonor] = useState(null);
   const [organizations, setOrganizations] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bankAccounts, setBankAccounts] = useState([]);
 
   useEffect(() => {
     const initializeForm = async () => {
@@ -198,7 +199,8 @@ const AddDonation = ({ donationId }) => {
         }),
         ...(donation.payment_type === 'Cheque' && {
           chequeNumber: donation.cheque_number?.toString()
-        })
+        }),
+        bankName: donation.bank_name || '',
       });
 
       setSelectedDonor(donorData);
@@ -209,6 +211,28 @@ const AddDonation = ({ donationId }) => {
       setError('Failed to fetch donation details');
     }
   };
+
+  const fetchBankAccounts = async (organizationName) => {
+    if (!organizationName) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('bank_details')
+        .select('*')
+        .eq('organization', organizationName);
+
+      if (error) throw error;
+      setBankAccounts(data);
+    } catch (error) {
+      console.error('Error fetching bank accounts:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedOrganization) {
+      fetchBankAccounts(selectedOrganization);
+    }
+  }, [selectedOrganization]);
 
   const handleSearch = (value) => {
     setSearchTerm(value);
@@ -287,6 +311,7 @@ const AddDonation = ({ donationId }) => {
         { cheque_number: Number(data.chequeNumber) } : {}),
       purpose: data.purposes,
       organization: data.organization,
+      bank_name: ['Online', 'Cheque', 'GPay'].includes(data.paymentType) ? data.bankName : null,
     };
 
     toast.promise(
@@ -320,6 +345,45 @@ const AddDonation = ({ donationId }) => {
     ).then(() => {
       router.push('/donations');
     });
+  };
+
+  const renderBankAccountField = () => {
+    if (['Online', 'Cheque', 'GPay'].includes(paymentType)) {
+      return (
+        <div>
+          <Label htmlFor="bankName">Bank Account</Label>
+          <Controller
+            name="bankName"
+            control={control}
+            rules={{ required: "Bank account is required" }}
+            render={({ field }) => (
+              <Select 
+                onValueChange={field.onChange} 
+                value={field.value}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Bank Account" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bankAccounts.map((account) => (
+                    <SelectItem 
+                      key={account.id} 
+                      value={account.bank_name}
+                    >
+                      {`${account.bank_name} - ${account.account_number}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.bankName && (
+            <p className="text-red-500">{errors.bankName.message}</p>
+          )}
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -504,6 +568,7 @@ const AddDonation = ({ donationId }) => {
                     <SelectItem value="Cash">Cash</SelectItem>
                     <SelectItem value="Online">Online</SelectItem>
                     <SelectItem value="Cheque">Cheque</SelectItem>
+                    <SelectItem value="GPay">GPay</SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -512,6 +577,8 @@ const AddDonation = ({ donationId }) => {
               <p className="text-red-500">{errors.paymentType.message}</p>
             )}
           </div>
+
+          {renderBankAccountField()}
 
           <div>
             <Label htmlFor="amount">Amount (₹)</Label>

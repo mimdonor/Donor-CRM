@@ -11,6 +11,22 @@ import { supabase } from "@/lib/supabase";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Pencil, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Image from 'next/image';
+import Org1 from "@/public/assets/Logo-1.png";
+import Org2 from "@/public/assets/org2.png";
+
+const organizations = [
+  { 
+    value: 'Mission India Movement', 
+    label: 'Mission India Movement',
+    logo: '/assets/Logo-1.png'
+  },
+  { 
+    value: 'Seeshan', 
+    label: 'Seeshan',
+    logo: '/assets/org2.png'
+  }
+];
 
 const BankDetails = () => {
   const [bankDetails, setBankDetails] = useState([]);
@@ -45,27 +61,24 @@ const BankDetails = () => {
     setError(null);
 
     try {
+      const bankData = {
+        bank_name: data.bankName,
+        account_number: data.accountNumber,
+        account_type: data.accountType,
+        organization: data.organization // Add organization field
+      };
+
       if (editingBank) {
-        // Update existing bank
         const { error: updateError } = await supabase
           .from('bank_details')
-          .update({
-            bank_name: data.bankName,
-            account_number: data.accountNumber,
-            account_type: data.accountType,
-          })
+          .update(bankData)
           .eq('id', editingBank.id);
 
         if (updateError) throw updateError;
       } else {
-        // Add new bank
         const { error: insertError } = await supabase
           .from('bank_details')
-          .insert({
-            bank_name: data.bankName,
-            account_number: data.accountNumber,
-            account_type: data.accountType,
-          });
+          .insert([bankData]);
 
         if (insertError) throw insertError;
       }
@@ -136,6 +149,36 @@ const BankDetails = () => {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
+                  <Label htmlFor="organization">Organization</Label>
+                  <Controller
+                    name="organization"
+                    control={control}
+                    rules={{ required: true }}
+                    render={({ field }) => (
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select organization" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {organizations.map((org) => (
+                            <SelectItem 
+                              key={org.value} 
+                              value={org.value}
+                              className="flex items-center gap-2"
+                            >
+                              {org.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="bankName">Bank Name</Label>
                   <Input 
                     id="bankName" 
@@ -199,7 +242,13 @@ const BankDetails = () => {
                 ) : (
                   bankDetails.map((bank) => (
                     <Card key={bank.id} className="p-4">
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-4 gap-4">
+                        <div>
+                          <Label>Organization</Label>
+                          <div className="flex items-center gap-2 mt-1">
+                            <p>{organizations.find(org => org.value === bank.organization)?.label}</p>
+                          </div>
+                        </div>
                         <div>
                           <Label>Bank Name</Label>
                           <p className="mt-1">{bank.bank_name}</p>

@@ -121,7 +121,9 @@ export default function PrintDonation() {
         if (!org) return 'Address not available';
         return `${org.street_name}, ${org.area_name}
 ${org.city}, ${org.state}
-${org.country} - ${org.pincode}`;
+${org.country} - ${org.pincode}
+Phone: ${org.phone}
+`;
     };
 
     if (loading) {
@@ -147,7 +149,7 @@ ${org.country} - ${org.pincode}`;
                         />
                     </div>
                     <div className="w-1/2 text-center">
-                        <h1 className="text-lg font-bold">
+                        <h1 className="text-lg text-[#1B6E94] font-bold">
                             {organization.name}
                         </h1>
                         <p className="text-sm whitespace-pre-line">{formatAddress(organization)}</p>
