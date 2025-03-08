@@ -7,9 +7,10 @@ import { MoreHorizontal, Eye, Edit, Trash2, Printer, Upload } from "lucide-react
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import dynamic from 'next/dynamic';
 import {
-  DropdownMenu,
   DropdownMenuContent,
+  DropdownMenu,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -27,6 +28,42 @@ import { Input } from "@/components/ui/input";
 import { usePermissions } from "@/context/PermissionsProvider";
 import { Textarea } from "@/components/ui/textarea";
 import toast from 'react-hot-toast';
+import "react-quill/dist/quill.snow.css";
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+
+// Custom toolbar handlers
+const customBoldHandler = function() {
+  const range = this.quill.getSelection();
+  if (range) {
+    this.quill.format('bold', !this.quill.getFormat(range).bold);
+  }
+};
+
+// Custom toolbar configuration
+const modules = {
+  toolbar: {
+    container: [
+      [{ 'header': [1, 2, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'color': [] }, { 'background': [] }],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      ['link', 'clean'],
+      [{ 'align': [] }]
+    ],
+    handlers: {
+      bold: customBoldHandler
+    }
+  }
+};
+
+const formats = [
+  'header',
+  'bold', 'italic', 'underline', 'strike',
+  'color', 'background',
+  'list', 'bullet',
+  'link', 'align'
+];
 
 const Donations = () => {
   const router = useRouter();
@@ -398,7 +435,7 @@ const Donations = () => {
           </DialogContent>
         </Dialog>
         <Dialog open={isReceiptMessageModalOpen} onOpenChange={setIsReceiptMessageModalOpen}>
-          <DialogContent className="text-black">
+          <DialogContent className="text-black max-w-2xl">
             <DialogHeader>
               <DialogTitle>{messageId ? 'Update' : 'Add'} Receipt Message</DialogTitle>
               <DialogDescription>
@@ -406,14 +443,17 @@ const Donations = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <Textarea
+              <ReactQuill
+                theme="snow"
                 value={receiptMessage}
-                onChange={(e) => setReceiptMessage(e.target.value)}
-                placeholder="Enter receipt message"
-                className="min-h-[100px]"
+                onChange={setReceiptMessage}
+                modules={modules}
+                formats={formats}
+                className="bg-white min-h-[200px]"
+                placeholder="Enter your receipt message here..."
               />
             </div>
-            <DialogFooter>
+            <DialogFooter className="mt-16"> {/* Increased margin-top to accommodate toolbar */}
               <Button 
                 onClick={handleAddReceiptMessage} 
                 disabled={isMessageSubmitting || !receiptMessage.trim()}

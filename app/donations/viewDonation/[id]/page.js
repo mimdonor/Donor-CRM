@@ -160,9 +160,10 @@ Phone: ${org.phone}
         </div> */}
 
         <div className="bg-gray-100 p-4 text-center">
-          <p className="text-sm italic mt-2">
-            {receiptData.message}
-          </p>
+        <p 
+      className="text-sm italic mt-2"
+      dangerouslySetInnerHTML={{ __html: receiptData.message }}
+    />
         </div>
       </Card>
     </div>
