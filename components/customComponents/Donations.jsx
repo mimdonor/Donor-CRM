@@ -174,7 +174,7 @@ const Donations = () => {
       formData.append('file', selectedFile);
       formData.append('donorId', selectedDonor);
       
-      const response = await fetch('/api/print-receipt', {
+      const response = await fetch('/api/send-receipt', {
         method: 'POST',
         body: formData,
       });
@@ -346,9 +346,6 @@ const Donations = () => {
             <Link href="/donations/addDonation">
               <Button className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]">Add Donation</Button>
             </Link>
-          )}
-          {donationsPermissions.canPrint && (
-            <Button className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]" onClick={handlePrintReceipt}>Send Receipt</Button>
           )}
           {donationsPermissions.canAdd && (
               <Button 

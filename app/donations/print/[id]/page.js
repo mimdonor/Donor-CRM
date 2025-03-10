@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { toast, Toaster } from 'react-hot-toast';
+
 
 export default function PrintDonation() {
     const { id } = useParams();
@@ -15,6 +17,7 @@ export default function PrintDonation() {
     const [receiptData, setReceiptData] = useState(false);
     const [purposes, setPurposes] = useState([]);
     const [organization, setOrganization] = useState(null);
+    const [isSending, setIsSending] = useState(false);
 
     useEffect(() => {
         fetchDonation();
@@ -126,6 +129,40 @@ Phone: ${org.phone}
 `;
     };
 
+    const handleSendReceipt = async () => {
+        if (!donation || !organization) return;
+        setIsSending(true);
+    
+        try {
+          const response = await fetch('/api/send-receipt', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              donorId: donation.donor_id, // Change this from donation.donor.id to donation.donor_id
+              receiptData: {
+                organization,
+                donation,
+                receiptMessage: receiptData.message,
+              }
+            }),
+          });
+    
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to send receipt');
+          }
+    
+          toast.success('Receipt sent successfully');
+        } catch (error) {
+          console.error('Error sending receipt:', error);
+          toast.error('Failed to send receipt');
+        } finally {
+          setIsSending(false);
+        }
+      };
+
     if (loading) {
         return (
             <div className="text-center">Loading donation information...</div>
@@ -138,6 +175,7 @@ Phone: ${org.phone}
 
     return (
         <div className="container mx-auto py-8 max-w-2xl print:p-0 print:max-w-full">
+      <Toaster position="top-center" reverseOrder={false} />
             <Card className="p-8 relative overflow-hidden">
                 <div className="flex justify-between items-center mb-6 bg-gray-100 p-4 rounded-lg">
                     <div className="w-1/4">
@@ -207,9 +245,16 @@ Phone: ${org.phone}
                 </div>
             </Card>
             {!isPrinting && (
-                <div className="flex flex-row-reverse w-full my-4">
+                <div className="flex flex-row-reverse w-full my-4 gap-4">
                     <Button onClick={handlePrint} className="print:hidden">
                         Print Donation
+                    </Button>
+                    <Button 
+                        onClick={handleSendReceipt} 
+                        className="print:hidden"
+                        disabled={isSending}
+                    >
+                        {isSending ? 'Sending...' : 'Send Receipt'}
                     </Button>
                 </div>
             )}

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { 
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .container { 
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background-color: #ffffff;
+            border-radius: 8px;
+        }
+        .header { 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            background-color: #f3f4f6;
+            padding: 16px;
+            border-radius: 8px;
+        }
+        .logo { 
+            width: 80px;
+            height: auto;
+        }
+        .organization-info { 
+            text-align: center;
+            flex: 1;
+            margin: 0 20px;
+        }
+        .organization-info h2 {
+            color: #1B6E94;
+            font-weight: bold;
+            margin: 0 0 8px 0;
+        }
+        .receipt-title {
+            text-align: center;
+            color: #059669;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 24px 0;
+        }
+        .receipt-details { 
+            margin: 20px 0;
+        }
+        .receipt-row { 
+            display: flex;
+            margin: 12px 0;
+            padding: 8px 0;
+        }
+        .receipt-label { 
+            width: 200px;
+            font-weight: bold;
+            color: #374151;
+        }
+        .receipt-value {
+            flex: 1;
+            color: #1f2937;
+        }
+        .footer { 
+            margin-top: 40px;
+            text-align: center;
+            background-color: #f3f4f6;
+            padding: 16px;
+            border-radius: 8px;
+        }
+        .meta-info {
+            text-align: right;
+        }
+        .meta-info p {
+            margin: 4px 0;
+            font-size: 14px;
+        }
+        .meta-info strong {
+            color: #374151;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{organization.image_url}}" alt="Logo" class="logo"/>
+            <div class="organization-info">
+                <h2>{{organization.name}}</h2>
+                <p>{{organization.street_name}}, {{organization.area_name}}<br/>
+                   {{organization.city}}, {{organization.state}}<br/>
+                   {{organization.country}} - {{organization.pincode}}<br/>
+                   Phone: {{organization.phone}}</p>
+            </div>
+            <div class="meta-info">
+                <p><strong>Receipt No:</strong> {{donation.receipt_no}}</p>
+                <p><strong>Date:</strong> {{donation.date}}</p>
+            </div>
+        </div>
+
+        <h1 class="receipt-title">Receipt</h1>
+
+        <div class="receipt-details">
+            <div class="receipt-row">
+                <span class="receipt-label">Received From:</span>
+                <span class="receipt-value">{{donation.donor.donor_name}}</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label">Payment Method:</span>
+                <span class="receipt-value">{{donation.payment_type}}</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label">Amount:</span>
+                <span class="receipt-value">Rs. {{donation.amount}}</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label">Purpose:</span>
+                <span class="receipt-value">{{donation.purpose}}</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            {{{receiptMessage}}}
+        </div>
+    </div>
+</body>
+</html>
