@@ -12,6 +12,10 @@ const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.
   }
 });
 
+// Add this before using the template
+handlebars.registerHelper('eq', function(a, b) {
+  return a === b;
+});
 
 export async function POST(req) {
   try {
@@ -99,7 +103,7 @@ export async function POST(req) {
 
     // Send WhatsApp message
     const messageData = new URLSearchParams({
-      appkey: 'c41cb8a9-e232-4ec5-b098-6e5c8f51deb7',
+      appkey: process.env.WHATSAPP_APP_KEY,
       authkey: 'jSvVJO1Lp3u07oDKDESCrDxyBoV7LSZ0UrMCT5t642H15j9YNX',
       to: donor.phone,
       message: 'Thank you for your contribution!',

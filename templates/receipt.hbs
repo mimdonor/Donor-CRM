@@ -21,9 +21,9 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 24px;
-            background-color: #f3f4f6;
             padding: 16px;
             border-radius: 8px;
+            background-color: {{#if (eq organization.name "Mission India Movement")}}#30D5C8{{else}}#6CDAE7{{/if}};
         }
         .logo { 
             width: 80px;
@@ -66,9 +66,9 @@
         .footer { 
             margin-top: 40px;
             text-align: center;
-            background-color: #f3f4f6;
             padding: 16px;
             border-radius: 8px;
+            background-color: {{#if (eq organization.name "Mission India Movement")}}#30D5C8{{else}}#6CDAE7{{/if}};
         }
         .meta-info {
             text-align: right;

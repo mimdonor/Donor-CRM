@@ -177,7 +177,7 @@ Phone: ${org.phone}
         <div className="container mx-auto py-8 max-w-2xl print:p-0 print:max-w-full">
       <Toaster position="top-center" reverseOrder={false} />
             <Card className="p-8 relative overflow-hidden">
-                <div className="flex justify-between items-center mb-6 bg-gray-100 p-4 rounded-lg">
+                <div className={`flex justify-between items-center mb-6 p-4 rounded-lg ${organization.name === 'Mission India Movement' ? 'bg-[#30D5C8]' : 'bg-[#6CDAE7]'}`}>
                     <div className="w-1/4">
                         <Image
                             src={organization.image_url}
@@ -187,7 +187,7 @@ Phone: ${org.phone}
                         />
                     </div>
                     <div className="w-1/2 text-center">
-                        <h1 className="text-lg text-[#1B6E94] font-bold">
+                        <h1 className="text-lg text-[#E22226] font-bold">
                             {organization.name}
                         </h1>
                         <p className="text-sm whitespace-pre-line">{formatAddress(organization)}</p>
@@ -237,7 +237,7 @@ Phone: ${org.phone}
                     </div>
                 </div> */}
 
-                <div className="bg-gray-100 p-4 text-center">
+                <div className={`${organization.name === 'Mission India Movement' ? 'bg-[#30D5C8]' : 'bg-[#6CDAE7]'} p-4 text-center`}>
                 <p 
       className="text-sm italic mt-2"
       dangerouslySetInnerHTML={{ __html: receiptData.message }}
