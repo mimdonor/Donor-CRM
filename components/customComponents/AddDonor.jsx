@@ -33,7 +33,7 @@ const RequiredLabel = ({ htmlFor, children }) => (
 );
 
 export default function AddDonor({ donorId }) {
-  const { register, handleSubmit, control, watch, formState: { errors }, reset, setValue, getValues, clearErrors } = useForm();
+  const { register, handleSubmit, control, watch, formState: { errors }, reset, setValue, getValues } = useForm();
   const [dropdownOptions, setDropdownOptions] = useState({
     donorSources: [],
     representatives: [],
@@ -51,9 +51,11 @@ export default function AddDonor({ donorId }) {
   const [selectedState, setSelectedState] = useState(null);
   const [selectedCity, setSelectedCity] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [salutations, setSalutations] = useState([]);
 
   useEffect(() => {
     fetchDropdownOptions();
+    fetchSalutations();
     fetchLastDonorId();
   }, []);
 
@@ -104,6 +106,20 @@ export default function AddDonor({ donorId }) {
     setIsDropdownsLoaded(true);
   };
 
+  const fetchSalutations = async () => {
+    const { data, error } = await supabase
+      .from('salutation_dropdown')
+      .select('name')
+      .eq('status', true)
+      .order('name');
+
+    if (error) {
+      console.error('Error fetching salutations:', error);
+    } else {
+      setSalutations(data || []);
+    }
+  };
+
   const fetchLastDonorId = async () => {
     const { data, error } = await supabase
       .from('donors')
@@ -136,78 +152,66 @@ export default function AddDonor({ donorId }) {
   };
 
   const fetchDonorData = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('donors')
-        .select('*')
-        .eq('id', donorId)
-        .single();
+    const { data, error } = await supabase
+      .from('donors')
+      .select('*')
+      .eq('id', donorId)
+      .single();
 
-      if (error) throw error;
-
+    if (error) {
+      console.error('Error fetching donor data:', error);
+    } else {
       setDonorNumber(data.donor_number);
       console.log('Fetched donor data:', data);
 
-      // First set location data
-      const country = Country.getAllCountries().find(c => c.name === data.country);
-      let state = null;
-      let city = null;
-
-      if (country) {
-        setSelectedCountry(country);
-        
-        // Find state by name in the selected country
-        const states = State.getStatesOfCountry(country.isoCode);
-        state = states.find(s => s.name === data.state);
-        if (state) {
-          setSelectedState(state);
-          
-          // Find city by name in the selected state
-          const cities = City.getCitiesOfState(country.isoCode, state.isoCode);
-          city = cities.find(c => c.name === data.city);
-          if (city) {
-            setSelectedCity(city);
-          }
-        }
-      }
-
-      // Set form data
       const formData = {
         donorNumber: data.donor_number,
         firstName: data.donor_name.split(' ')[0],
-        lastName: data.donor_name.split(' ').slice(1).join(' '),
-        institutionName: data.institution_name || '',
-        phone: data.phone || '',
-        streetName: data.street_name || '',
-        areaName: data.area_name || '',
-        landmark: data.landmark || '',
-        pincode: data.pincode || '',
-        donorSource: data.donor_source || '',
-        representative: data.representative || '',
-        donorZone: data.donor_zone || '',
-        donorType: data.donor_type || '',
-        category: data.category || '',
-        purposes: Array.isArray(data.purposes) ? data.purposes : data.purposes ? data.purposes.slice(1, -1).split(',') : [],
-        commitment: data.commitment?.toString() || '',
-        panNumber: data.pan_number || '',
-        isMagazineSubscribed: data.is_magazine_subscribed || false,
+        lastName: data.donor_name.split(' ')[1] || '',
+        institutionName: data.institution_name,
+        phone: data.phone,
+        streetName: data.street_name,
+        areaName: data.area_name,
+        landmark: data.landmark,
+        city: data.city,
+        state: data.state,
+        country: data.country,
+        pincode: data.pincode,
+        donorSource: data.donor_source,
+        representative: data.representative,
+        donorZone: data.donor_zone,
+        donorType: data.donor_type,
+        category: data.category,
+        purposes: Array.isArray(data.purposes) ? data.purposes : data.purposes ? data.purposes.slice(1, -1).split(',') : [], // Parse Postgres array
+        commitment: data.commitment,
+        panNumber: data.pan_number,
+        isMagazineSubscribed: data.is_magazine_subscribed,
         contactPersonTitle: data.contact_person?.split(' ')[0] || '',
         contactPersonName: data.contact_person?.split(' ').slice(1).join(' ') || '',
-        country: country?.isoCode || '',
-        state: state?.isoCode || '',
-        city: city?.name || ''
       };
 
-      // Reset form with all values
+      console.log('Form data to be set:', formData);
+
       reset(formData);
 
-      // Force update of controlled inputs
-      setValue('country', country?.isoCode || '', { shouldValidate: true });
-      setValue('state', state?.isoCode || '', { shouldValidate: true });
-      setValue('city', city?.name || '', { shouldValidate: true });
+      // Set selected country, state, and city
+      const country = Country.getAllCountries().find(c => c.name === data.country);
+      const state = State.getStatesOfCountry(country?.isoCode).find(s => s.name === data.state);
+      const city = City.getCitiesOfState(country?.isoCode, state?.isoCode).find(c => c.name === data.city);
 
-    } catch (error) {
-      console.error('Error fetching donor data:', error);
+      setSelectedCountry(country);
+      setSelectedState(state);
+      setSelectedCity(city);
+
+      // Force update of controlled inputs
+      Object.keys(formData).forEach(key => {
+        const value = formData[key];
+        if (value) {
+          setValue(key, value, { shouldValidate: true });
+        }
+      });
+
+      console.log('Current form values:', getValues());
     }
   };
 
@@ -222,136 +226,88 @@ export default function AddDonor({ donorId }) {
   };
 
   const handleStateChange = (stateCode) => {
-    if (!stateCode || !selectedCountry) return;
-    
     const state = State.getStateByCodeAndCountry(stateCode, selectedCountry.isoCode);
     if (state) {
       setSelectedState(state);
       setSelectedCity(null);
-      setValue('state', state.isoCode, {shouldValidate: true});
-      setValue('city', '', {shouldValidate: true});
+      setValue('state', state.name, { shouldValidate: true });
     }
   };
 
   const handleCityChange = (cityName) => {
-    if (!cityName || !selectedState || !selectedCountry) return;
-    
-    const cities = City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode);
-    const city = cities.find(c => c.name === cityName);
-    if (city) {
-      setSelectedCity(city);
-      setValue('city', city.name, {shouldValidate: true});
-    }
-  };
-
-  const checkPhoneNumber = async (phoneNumber) => {
-    if (!phoneNumber) return true;
-
-    try {
-      const { data, error } = await supabase
-        .from('donors')
-        .select('id, donor_name, phone')
-        .eq('phone', phoneNumber);
-
-      if (error) throw error;
-
-      // If editing, exclude the current donor from the check
-      if (isEditing) {
-        const otherDonors = data.filter(donor => donor.id !== parseInt(donorId));
-        if (otherDonors.length > 0) {
-          toast.error(`Phone number already exists for donor: ${otherDonors[0].donor_name}`);
-          return false;
-        }
-      } else if (data.length > 0) {
-        toast.error(`Phone number already exists for donor: ${data[0].donor_name}`);
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error checking phone number:', error);
-      return false;
-    }
+    const city = City.getAllCities().find(c => c.name === cityName && c.stateCode === selectedState.isoCode && c.countryCode === selectedCountry.isoCode);
+    setSelectedCity(city);
+    setValue('city', city.name, { shouldValidate: true });
   };
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
 
-    try {
-      // Check phone number before submitting
-      const isPhoneValid = await checkPhoneNumber(data.phone);
-      if (!isPhoneValid) {
-        setIsSubmitting(false);
-        return;
-      }
+    const selectedZone = dropdownOptions.donorZones.find(zone => zone.name === data.donorZone);
+    const donorData = {
+      donor_number: donorId ? donorNumber : lastDonorId,
+      donor_name: watchDonorType === 'Institution' 
+        ? data.institutionName 
+        : `${data.salutation} ${data.firstName} ${data.lastName}`.trim(),
+      institution_name: data.donorType === 'Institution' ? data.institutionName : '',
+      phone: data.phone,
+      street_name: data.streetName,
+      area_name: data.areaName,
+      landmark: data.landmark,
+      city: selectedCity.name,
+      state: selectedState.name,
+      country: selectedCountry.name,
+      pincode: Number(data.pincode),
+      donor_source: data.donorSource,
+      representative: data.representative,
+      donor_zone: data.donorZone,
+      donor_zone_state: selectedZone?.state,
+      donor_zone_district: selectedZone?.district,
+      donor_type: data.donorType,
+      category: data.category,
+      purposes: data.purposes ? `{${data.purposes.join(',')}}` : null, // Format as Postgres array
+      commitment: data.commitment ? parseFloat(data.commitment) : null,
+      pan_number: data.panNumber,
+      is_magazine_subscribed: data.isMagazineSubscribed || false,
+      salutation: data.salutation, // Add salutation field
+    };
 
-      const selectedZone = dropdownOptions.donorZones.find(zone => zone.name === data.donorZone);
-      const donorData = {
-        donor_number: donorId ? donorNumber : lastDonorId,
-        donor_name: `${data.firstName} ${data.lastName}`,
-        institution_name: data.donorType === 'Institution' ? data.institutionName : '',
-        phone: data.phone,
-        street_name: data.streetName,
-        area_name: data.areaName,
-        landmark: data.landmark,
-        city: selectedCity.name,
-        state: selectedState.name,
-        country: selectedCountry.name,
-        pincode: Number(data.pincode),
-        donor_source: data.donorSource,
-        representative: data.representative,
-        donor_zone: data.donorZone,
-        donor_zone_state: selectedZone?.state,
-        donor_zone_district: selectedZone?.district,
-        donor_type: data.donorType,
-        category: data.category,
-        purposes: data.purposes ? `{${data.purposes.join(',')}}` : null, // Format as Postgres array
-        commitment: data.commitment ? parseFloat(data.commitment) : null,
-        pan_number: data.panNumber,
-        is_magazine_subscribed: data.isMagazineSubscribed || false,
-      };
-
-      // Concatenate contact person title and name for institutions
-      if (data.donorType === 'Institution') {
-        donorData.contact_person = `${data.contactPersonTitle} ${data.contactPersonName}`.trim();
-      }
-
-      toast.promise(
-        (async () => {
-          let result;
-          if (isEditing) {
-            result = await supabase
-              .from('donors')
-              .update(donorData)
-              .eq('id', donorId);
-          } else {
-            result = await supabase
-              .from('donors')
-              .insert([donorData])
-              .select();
-          }
-
-          if (result.error) {
-            throw new Error(result.error.message);
-          }
-
-          reset();
-          setIsSubmitting(false);
-          return isEditing ? "Donor updated successfully" : "Donor added successfully";
-        })(),
-        {
-          loading: isEditing ? "Updating donor..." : "Adding donor...",
-          success: (message) => message,
-          error: (error) => `Failed to ${isEditing ? 'update' : 'add'} donor: ${error.message}`,
-        }
-      ).then(() => {
-        router.push('/donors');
-      });
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      toast.error('Failed to submit form');
-      setIsSubmitting(false);
+    // Concatenate contact person title and name for institutions
+    if (data.donorType === 'Institution') {
+      donorData.contact_person = `${data.contactPersonTitle} ${data.contactPersonName}`.trim();
     }
+
+    toast.promise(
+      (async () => {
+        let result;
+        if (isEditing) {
+          result = await supabase
+            .from('donors')
+            .update(donorData)
+            .eq('id', donorId);
+        } else {
+          result = await supabase
+            .from('donors')
+            .insert([donorData])
+            .select();
+        }
+
+        if (result.error) {
+          throw new Error(result.error.message);
+        }
+
+        reset();
+        setIsSubmitting(false);
+        return isEditing ? "Donor updated successfully" : "Donor added successfully";
+      })(),
+      {
+        loading: isEditing ? "Updating donor..." : "Adding donor...",
+        success: (message) => message,
+        error: (error) => `Failed to ${isEditing ? 'update' : 'add'} donor: ${error.message}`,
+      }
+    ).then(() => {
+      router.push('/donors');
+    });
   };
 
   return (
@@ -515,39 +471,75 @@ export default function AddDonor({ donorId }) {
                       <Input id="institutionName" {...register("institutionName", { required: "Institution Name is required" })} />
                       {errors.institutionName && <p className="text-red-500 text-sm">{errors.institutionName.message}</p>}
                     </div>
-                    <div className="space-y-2">
-                      <RequiredLabel htmlFor="contactPersonTitle">Contact Person Title</RequiredLabel>
-                      <Controller
-                        name="contactPersonTitle"
-                        control={control}
-                        rules={{ required: "Contact Person Title is required" }}
-                        render={({ field }) => (
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select Title" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {['Mr.', 'Mrs.', 'Ms.', 'Dr.'].map((title) => (
-                                <SelectItem key={title} value={title}>{title}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                      {errors.contactPersonTitle && <p className="text-red-500 text-sm">{errors.contactPersonTitle.message}</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <RequiredLabel htmlFor="contactPersonName">Contact Person Name</RequiredLabel>
-                      <Input id="contactPersonName" {...register("contactPersonName", { required: "Contact Person Name is required" })} />
-                      {errors.contactPersonName && <p className="text-red-500 text-sm">{errors.contactPersonName.message}</p>}
+                    <div className="flex gap-4">
+                      <div className="w-[100px] space-y-2">
+                        <RequiredLabel htmlFor="contactPersonTitle">Title</RequiredLabel>
+                        <Controller
+                          name="contactPersonTitle"
+                          control={control}
+                          rules={{ required: "Required" }}
+                          render={({ field }) => (
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Title" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {salutations.map((s) => (
+                                  <SelectItem key={s.name} value={s.name}>
+                                    {s.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                        {errors.contactPersonTitle && <p className="text-red-500 text-sm">{errors.contactPersonTitle.message}</p>}
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <RequiredLabel htmlFor="contactPersonName">Contact Person Name</RequiredLabel>
+                        <Input id="contactPersonName" {...register("contactPersonName", { required: "Contact Person Name is required" })} />
+                        {errors.contactPersonName && <p className="text-red-500 text-sm">{errors.contactPersonName.message}</p>}
+                      </div>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="space-y-2">
-                      <RequiredLabel htmlFor="firstName">First Name</RequiredLabel>
-                      <Input id="firstName" {...register("firstName", { required: "First Name is required" })} />
-                      {errors.firstName && <p className="text-red-500 text-sm">{errors.firstName.message}</p>}
+                    <div className="flex gap-4">
+                      <div className="w-[100px] space-y-2">
+                        <RequiredLabel htmlFor="salutation">Title</RequiredLabel>
+                        <Controller
+                          name="salutation"
+                          control={control}
+                          rules={{ required: "Required" }}
+                          render={({ field }) => (
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Title" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {salutations.map((s) => (
+                                  <SelectItem key={s.name} value={s.name}>
+                                    {s.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                        {errors.salutation && (
+                          <p className="text-red-500 text-sm">{errors.salutation.message}</p>
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <RequiredLabel htmlFor="firstName">First Name</RequiredLabel>
+                        <Input 
+                          id="firstName" 
+                          {...register("firstName", { required: "First Name is required" })} 
+                        />
+                        {errors.firstName && (
+                          <p className="text-red-500 text-sm">{errors.firstName.message}</p>
+                        )}
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lastName">Last Name</Label>
@@ -565,28 +557,19 @@ export default function AddDonor({ donorId }) {
                   <Controller
                     name="phone"
                     control={control}
-                    rules={{ 
-                      required: "Phone Number is required",
-                      validate: async value => await checkPhoneNumber(value) || "Phone number already exists"
-                    }}
+                    rules={{ required: "Phone Number is required" }}
                     render={({ field }) => (
                       <PhoneInput
                         defaultCountry="in"
                         value={field.value}
-                        onChange={(phone) => {
-                          field.onChange(phone);
-                          // Clear any existing errors when the phone number changes
-                          if (errors.phone) {
-                            clearErrors('phone');
-                          }
-                        }}
+                        onChange={(phone) => field.onChange(phone)}
                         className="w-full"
                         inputStyle={{
                           width: '100%',
                           height: '40px',
                           fontSize: '16px',
                           borderRadius: 'var(--radius)',
-                          border: errors.phone ? '1px solid red' : '1px solid hsl(var(--input))',
+                          border: '1px solid hsl(var(--input))',
                           backgroundColor: 'hsl(var(--background))',
                           color: 'hsl(var(--foreground))',
                         }}
@@ -645,22 +628,16 @@ export default function AddDonor({ donorId }) {
                     control={control}
                     rules={{ required: "State is required" }}
                     render={({ field }) => (
-                      <Select 
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          handleStateChange(value);
-                        }} 
-                        value={field.value}
-                        disabled={!selectedCountry}
-                      >
+                      <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        handleStateChange(value);
+                      }} value={selectedState?.isoCode} disabled={!selectedCountry}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select State" />
                         </SelectTrigger>
                         <SelectContent>
                           {selectedCountry && State.getStatesOfCountry(selectedCountry.isoCode).map((state) => (
-                            <SelectItem key={state.isoCode} value={state.isoCode}>
-                              {state.name}
-                            </SelectItem>
+                            <SelectItem key={state.isoCode} value={state.isoCode}>{state.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -675,26 +652,17 @@ export default function AddDonor({ donorId }) {
                     control={control}
                     rules={{ required: "City is required" }}
                     render={({ field }) => (
-                      <Select 
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          handleCityChange(value);
-                        }} 
-                        value={field.value}
-                        disabled={!selectedState}
-                      >
+                      <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        handleCityChange(value);
+                      }} value={selectedCity?.name} disabled={!selectedState}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select City" />
                         </SelectTrigger>
                         <SelectContent>
-                          {selectedState && selectedCountry && 
-                            City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode)
-                              .map((city) => (
-                                <SelectItem key={city.name} value={city.name}>
-                                  {city.name}
-                                </SelectItem>
-                              ))
-                          }
+                          {selectedState && City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode).map((city) => (
+                            <SelectItem key={city.name} value={city.name}>{city.name}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     )}

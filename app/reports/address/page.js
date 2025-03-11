@@ -23,6 +23,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { usePermissions } from "@/context/PermissionsProvider";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 const Page = () => {
     const [donors, setDonors] = useState([]);
@@ -34,10 +35,10 @@ const Page = () => {
         donorName: "",
         city: "",
         state: "",
-        donorType: "all",     // Set default to "all"
-        donorSource: "all",   // Set default to "all"
-        donorZone: "all",     // Set default to "all"
-        representative: "all", // Set default to "all"
+        donorTypes: [], // Changed to array
+        donorSources: [], // Changed to array
+        donorZones: [], // Changed to array
+        representatives: [], // Changed to array
     });
 
     const { permissions, user } = usePermissions();
@@ -84,9 +85,25 @@ const Page = () => {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const { data, error } = await supabase
+            let query = supabase
                 .from("donors")
-                .select("*");  // Removed order to test if data is being fetched
+                .select("*");
+
+            // Modified filters for arrays
+            if (filters.donorTypes.length > 0) {
+                query = query.in('donor_type', filters.donorTypes);
+            }
+            if (filters.donorSources.length > 0) {
+                query = query.in('donor_source', filters.donorSources);
+            }
+            if (filters.donorZones.length > 0) {
+                query = query.in('donor_zone', filters.donorZones);
+            }
+            if (filters.representatives.length > 0) {
+                query = query.in('representative', filters.representatives);
+            }
+
+            const { data, error } = await query;
 
             if (error) throw error;
 
@@ -117,10 +134,10 @@ const Page = () => {
             donorName: "",
             city: "",
             state: "",
-            donorType: "all",     // Set default to "all"
-            donorSource: "all",   // Set default to "all"
-            donorZone: "all",     // Set default to "all"
-            representative: "all", // Set default to "all"
+            donorTypes: [], // Changed to array
+            donorSources: [], // Changed to array
+            donorZones: [], // Changed to array
+            representatives: [], // Changed to array
         });
     };
 
@@ -149,19 +166,18 @@ const Page = () => {
             if (filters.state) {
                 query = query.ilike("state", `%${filters.state}%`);
             }
-            if (filters.donorType) {
-                query = query.eq("donor_type", filters.donorType);
+            if (filters.donorTypes.length > 0) {
+                query = query.in('donor_type', filters.donorTypes);
             }
-            if (filters.donorSource) {
-                query = query.eq("donor_source", filters.donorSource);
+            if (filters.donorSources.length > 0) {
+                query = query.in('donor_source', filters.donorSources);
             }
-            if (filters.donorZone) {
-                query = query.eq("donor_zone", filters.donorZone);
+            if (filters.donorZones.length > 0) {
+                query = query.in('donor_zone', filters.donorZones);
             }
-            if (filters.representative) {
-                query = query.eq("representative", filters.representative);
+            if (filters.representatives.length > 0) {
+                query = query.in('representative', filters.representatives);
             }
-        
 
             const { data, error } = await query;
 
@@ -280,10 +296,8 @@ const Page = () => {
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-4">
-                            <div className="space-y-2 w-[200px]">
-                                <Label htmlFor="donorName">Donor Name</Label>
+                            <div className="w-[200px]">
                                 <Input
-                                    id="donorName"
                                     placeholder="Search donor name"
                                     value={filters.donorName}
                                     onChange={(e) =>
@@ -294,10 +308,8 @@ const Page = () => {
                                     }
                                 />
                             </div>
-                            <div className="space-y-2 w-[200px]">
-                                <Label htmlFor="city">City</Label>
+                            <div className="w-[200px]">
                                 <Input
-                                    id="city"
                                     placeholder="Search city"
                                     value={filters.city}
                                     onChange={(e) =>
@@ -308,10 +320,8 @@ const Page = () => {
                                     }
                                 />
                             </div>
-                            <div className="space-y-2 w-[200px]">
-                                <Label htmlFor="state">State</Label>
+                            <div className="w-[200px]">
                                 <Input
-                                    id="state"
                                     placeholder="Search state"
                                     value={filters.state}
                                     onChange={(e) =>
@@ -322,112 +332,58 @@ const Page = () => {
                                     }
                                 />
                             </div>
-                            <div className="space-y-2 w-[180px]">
-                                <Label htmlFor="donorType">Donor Type</Label>
-                                <Select
-                                    id="donorType"
-                                    value={filters.donorType}
-                                    onValueChange={(value) =>
-                                        setFilters((prev) => ({
-                                            ...prev,
-                                            donorType: value,
-                                        }))
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All</SelectItem>
-                                        {dropdownOptions.donorTypes.map((type) => (
-                                            <SelectItem key={type.id} value={type.name}>
-                                                {type.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                            <div className="w-[200px]">
+                                <MultiSelect
+                                    options={dropdownOptions.donorTypes.map(type => ({
+                                        value: type.name,
+                                        label: type.name
+                                    }))}
+                                    selected={filters.donorTypes}
+                                    onChange={(selected) => setFilters(prev => ({ ...prev, donorTypes: selected }))}
+                                    placeholder="Donor Types"
+                                />
                             </div>
-                            <div className="space-y-2 w-[180px]">
-                                <Label htmlFor="donorSource">Donor Source</Label>
-                                <Select
-                                    id="donorSource"
-                                    value={filters.donorSource}
-                                    onValueChange={(value) =>
-                                        setFilters((prev) => ({
-                                            ...prev,
-                                            donorSource: value,
-                                        }))
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All</SelectItem>
-                                        {dropdownOptions.donorSources.map((source) => (
-                                            <SelectItem key={source.id} value={source.name}>
-                                                {source.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                            <div className="space-y-2 w-[200px]">
+                                <Label>Donor Sources</Label>
+                                <MultiSelect
+                                    options={dropdownOptions.donorSources.map(source => ({
+                                        value: source.name,
+                                        label: source.name
+                                    }))}
+                                    selected={filters.donorSources}
+                                    onChange={(selected) => setFilters(prev => ({ ...prev, donorSources: selected }))}
+                                    placeholder="Select Donor Sources"
+                                />
                             </div>
-                            <div className="space-y-2 w-[180px]">
-                                <Label htmlFor="donorZone">Donor Zone</Label>
-                                <Select
-                                    id="donorZone"
-                                    value={filters.donorZone}
-                                    onValueChange={(value) =>
-                                        setFilters((prev) => ({
-                                            ...prev,
-                                            donorZone: value,
-                                        }))
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All</SelectItem>
-                                        {dropdownOptions.donorZones.map((zone) => (
-                                            <SelectItem key={zone.id} value={zone.name}>
-                                                {zone.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                            <div className="space-y-2 w-[200px]">
+                                <Label>Donor Zones</Label>
+                                <MultiSelect
+                                    options={dropdownOptions.donorZones.map(zone => ({
+                                        value: zone.name,
+                                        label: zone.name
+                                    }))}
+                                    selected={filters.donorZones}
+                                    onChange={(selected) => setFilters(prev => ({ ...prev, donorZones: selected }))}
+                                    placeholder="Select Donor Zones"
+                                />
                             </div>
-                            <div className="space-y-2 w-[180px]">
-                                <Label htmlFor="representative">Representative</Label>
-                                <Select
-                                    id="representative"
-                                    value={filters.representative}
-                                    onValueChange={(value) =>
-                                        setFilters((prev) => ({
-                                            ...prev,
-                                            representative: value,
-                                        }))
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All</SelectItem>
-                                        {dropdownOptions.representatives.map((rep) => (
-                                            <SelectItem key={rep.id} value={rep.name}>
-                                                {rep.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                            <div className="space-y-2 w-[200px]">
+                                <Label>Representatives</Label>
+                                <MultiSelect
+                                    options={dropdownOptions.representatives.map(rep => ({
+                                        value: rep.name,
+                                        label: rep.name
+                                    }))}
+                                    selected={filters.representatives}
+                                    onChange={(selected) => setFilters(prev => ({ ...prev, representatives: selected }))}
+                                    placeholder="Select Representatives"
+                                />
                             </div>
-                            <div className="space-y-2 w-[180px]">
-                                <Label>&nbsp;</Label> {/* Empty label to maintain alignment */}
+                            <div className="w-[180px]">
                                 <Button 
                                     variant="outline" 
                                     onClick={resetFilters}
-                                    className="w-full" // Make button full width of container
+                                    className="w-full"
                                 >
                                     <X className="mr-2 h-4 w-4" />
                                     Reset Filters

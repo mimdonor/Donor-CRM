@@ -56,3 +56,11 @@ body {
   }
 }
 
+.receipt-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer/Edge */
+}
+
+.receipt-scrollbar::-webkit-scrollbar {
+  display: none; /* WebKit browsers */
+}

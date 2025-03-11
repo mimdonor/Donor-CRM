@@ -17,17 +17,55 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { usePermissions } from "@/context/PermissionsProvider";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 const Page = () => {
     const [donations, setDonations] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
+    const [bankOptions, setBankOptions] = useState([]); // Add this state
+
+    // Add this function to fetch bank names
+    const fetchBankNames = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('bank_details')
+                .select('bank_name')
+                .order('bank_name');
+
+            if (error) throw error;
+
+            // Transform data for MultiSelect
+            const options = data.map(bank => ({
+                value: bank.bank_name,
+                label: bank.bank_name
+            }));
+            setBankOptions(options);
+        } catch (error) {
+            console.error('Error fetching bank names:', error);
+        }
+    };
+
+    // Add useEffect to fetch bank names
+    useEffect(() => {
+        fetchBankNames();
+    }, []);
+
+    // Modify the filters state
     const [filters, setFilters] = useState({
         startDate: null,
         endDate: null,
         donorName: '',
-        paymentType: '',
+        paymentTypes: [],
+        bankNames: [], // Change from bankName to bankNames array
     });
+
+    const paymentTypeOptions = [
+        { value: 'Cash', label: 'Cash' },
+        { value: 'Online', label: 'Online' },
+        { value: 'Cheque', label: 'Cheque' },
+        { value: 'GPay', label: 'GPay' },
+    ];
 
     const { permissions, user } = usePermissions();
     const reportsPermissions = permissions?.reportsModule || {};
@@ -61,6 +99,7 @@ const Page = () => {
         {header: 'Date', accessorKey: 'date'},
         {header: 'Payment Type', accessorKey: 'payment_type'},
         {header: 'Amount', accessorKey: 'amount'},
+        {header: 'Bank Name', accessorKey: 'bank_name'},
         {header: 'Receipt No', accessorKey: 'receipt_no'},
         {header: 'Transaction Number', accessorKey: 'transaction_number'},
         {header: 'Cheque Number', accessorKey: 'cheque_number'},
@@ -88,8 +127,12 @@ const Page = () => {
             if (filters.donorName) {
                 query = query.ilike('donor_name', `%${filters.donorName}%`);
             }
-            if (filters.paymentType) {
-                query = query.ilike('payment_type', filters.paymentType);
+            if (filters.paymentTypes.length > 0) {
+                query = query.in('payment_type', filters.paymentTypes);
+            }
+            // Update bank name filter to use IN operator
+            if (filters.bankNames.length > 0) {
+                query = query.in('bank_name', filters.bankNames);
             }
 
             const { data, error, count } = await query;
@@ -126,8 +169,8 @@ const Page = () => {
             if (filters.donorName) {
                 query = query.ilike('donor_name', `%${filters.donorName}%`);
             }
-            if (filters.paymentType) {
-                query = query.ilike('payment_type', filters.paymentType);
+            if (filters.paymentTypes.length > 0) {
+                query = query.in('payment_type', filters.paymentTypes);
             }
 
             const { data, error } = await query;
@@ -161,7 +204,8 @@ const Page = () => {
             startDate: null,
             endDate: null,
             donorName: '',
-            paymentType: '',
+            paymentTypes: [],
+            bankNames: [], // Update this line
         });
     };
 
@@ -233,20 +277,22 @@ const Page = () => {
                                 onChange={(e) => setFilters(prev => ({ ...prev, donorName: e.target.value }))}
                                 className="w-[200px]"
                             />
-                            <Select 
-                                value={filters.paymentType} 
-                                onValueChange={(value) => setFilters(prev => ({ ...prev, paymentType: value === 'All' ? '' : value }))}
-                            >
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Payment Type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="All">All</SelectItem>
-                                    <SelectItem value="Cash">Cash</SelectItem>
-                                    <SelectItem value="Online">Online</SelectItem>
-                                    <SelectItem value="Cheque">Cheque</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <div className="w-[200px]">
+                                <MultiSelect
+                                    options={bankOptions}
+                                    selected={filters.bankNames}
+                                    onChange={(selected) => setFilters(prev => ({ ...prev, bankNames: selected }))}
+                                    placeholder="Select Banks"
+                                />
+                            </div>
+                            <div className="w-[200px]">
+                                <MultiSelect
+                                    options={paymentTypeOptions}
+                                    selected={filters.paymentTypes}
+                                    onChange={(selected) => setFilters(prev => ({ ...prev, paymentTypes: selected }))}
+                                    placeholder="Payment Types"
+                                />
+                            </div>
                             <Button variant="outline" onClick={resetFilters}>
                                 <X className="mr-2 h-4 w-4" />
                                 Reset Filters

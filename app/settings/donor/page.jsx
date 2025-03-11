@@ -6,6 +6,7 @@ import SettingsCard from "@/components/customComponents/SettingsCard";
 
 const DonorSettings = () => {
   const settingsCategories = [
+    { title: "Salutations", table: "salutation_dropdown" },
     { title: "Donor Source", table: "donorsource_dropdown" },
     { title: "Donor Zone", table: "donorzone_dropdown" },
     { title: "Representatives", table: "representatives_dropdown" }

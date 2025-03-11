@@ -277,6 +277,13 @@ export default function Donor() {
           </TabsList>
 
           <div className="flex space-x-2">
+          {permissions && donorPermissions.canAdd && (
+              <Link href="/donors/addDonor">
+                <Button className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]">
+                  Add Donor
+                </Button>
+              </Link>
+            )}
             {donorPermissions.canAdd && (
               <Button 
                 className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]" 
@@ -284,13 +291,6 @@ export default function Donor() {
               >
                 Import Donor
               </Button>
-            )}
-            {permissions && donorPermissions.canAdd && (
-              <Link href="/donors/addDonor">
-                <Button className="bg-[#6C665F] text-[#F3E6D5] hover:bg-[#494644] hover:text-[#e7e3de]">
-                  Add Donor
-                </Button>
-              </Link>
             )}
             <ColumnToggle />
           </div>

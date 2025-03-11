@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 const Page = () => {
     const [donors, setDonors] = useState([]);
@@ -28,10 +29,10 @@ const Page = () => {
         startDate: null,
         endDate: null,
         donorName: '',
-        donorType: '',
-        donorSource: '',
-        donorZone: '',
-        representative: '',
+        donorTypes: [],
+        donorSources: [],
+        donorZones: [],
+        representatives: [],
         category: '',
     });
     const [dropdownOptions, setDropdownOptions] = useState({
@@ -98,17 +99,17 @@ const Page = () => {
             if (filters.donorName) {
                 query = query.ilike('donor_name', `%${filters.donorName}%`);
             }
-            if (filters.donorType) {
-                query = query.eq('donor_type', filters.donorType);
+            if (filters.donorTypes.length > 0) {
+                query = query.in('donor_type', filters.donorTypes);
             }
-            if (filters.donorSource) {
-                query = query.eq('donor_source', filters.donorSource);
+            if (filters.donorSources.length > 0) {
+                query = query.in('donor_source', filters.donorSources);
             }
-            if (filters.donorZone) {
-                query = query.eq('donor_zone', filters.donorZone);
+            if (filters.donorZones.length > 0) {
+                query = query.in('donor_zone', filters.donorZones);
             }
-            if (filters.representative) {
-                query = query.eq('representative', filters.representative);
+            if (filters.representatives.length > 0) {
+                query = query.in('representative', filters.representatives);
             }
             if (filters.category) {
                 query = query.eq('category', filters.category);
@@ -140,10 +141,10 @@ const Page = () => {
             startDate: null,
             endDate: null,
             donorName: '',
-            donorType: '',
-            donorSource: '',
-            donorZone: '',
-            representative: '',
+            donorTypes: [],
+            donorSources: [],
+            donorZones: [],
+            representatives: [],
             category: '',
         });
     };
@@ -216,21 +217,50 @@ const Page = () => {
                                 onChange={(e) => setFilters(prev => ({ ...prev, donorName: e.target.value }))}
                                 className="w-[200px]"
                             />
-                            <Select 
-                                value={filters.donorType} 
-                                onValueChange={(value) => setFilters(prev => ({ ...prev, donorType: value === 'All' ? '' : value }))}
-                            >
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Donor Type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="All">All</SelectItem>
-                                    {dropdownOptions.donorTypes.map((type) => (
-                                        <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {/* ... (other Select components for donorSource, donorZone, representative, category) ... */}
+                            <div className="w-[200px]">
+                                <MultiSelect
+                                    options={dropdownOptions.donorTypes.map(type => ({
+                                        value: type.name,
+                                        label: type.name
+                                    }))}
+                                    selected={filters.donorTypes}
+                                    onChange={(selected) => setFilters(prev => ({ ...prev, donorTypes: selected }))}
+                                    placeholder="Donor Types"
+                                />
+                            </div>
+                            <div className="w-[200px]">
+                                <MultiSelect
+                                    options={dropdownOptions.donorSources.map(source => ({
+                                        value: source.name,
+                                        label: source.name
+                                    }))}
+                                    selected={filters.donorSources}
+                                    onChange={(selected) => setFilters(prev => ({ ...prev, donorSources: selected }))}
+                                    placeholder="Donor Sources"
+                                />
+                            </div>
+                            <div className="space-y-2 w-[200px]">
+                                <MultiSelect
+                                    options={dropdownOptions.donorZones.map(zone => ({
+                                        value: zone.name,
+                                        label: zone.name
+                                    }))}
+                                    selected={filters.donorZones}
+                                    onChange={(selected) => setFilters(prev => ({ ...prev, donorZones: selected }))}
+                                    placeholder="Select Zones"
+                                />
+                            </div>
+                            <div className="space-y-2 w-[200px]">
+                                <MultiSelect
+                                    options={dropdownOptions.representatives.map(rep => ({
+                                        value: rep.name,
+                                        label: rep.name
+                                    }))}
+                                    selected={filters.representatives}
+                                    onChange={(selected) => setFilters(prev => ({ ...prev, representatives: selected }))}
+                                    placeholder="Select Representatives"
+                                />
+                            </div>
                             <Button variant="outline" onClick={resetFilters}>
                                 <X className="mr-2 h-4 w-4" />
                                 Reset Filters

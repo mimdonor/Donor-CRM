@@ -432,25 +432,25 @@ const Donations = () => {
           </DialogContent>
         </Dialog>
         <Dialog open={isReceiptMessageModalOpen} onOpenChange={setIsReceiptMessageModalOpen}>
-          <DialogContent className="text-black max-w-2xl">
+          <DialogContent className="text-black max-w-2xl max-h-[90vh] flex flex-col">
             <DialogHeader>
               <DialogTitle>{messageId ? 'Update' : 'Add'} Receipt Message</DialogTitle>
               <DialogDescription>
                 Enter the message to be displayed on receipts
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="flex-1 min-h-0 overflow-auto receipt-scrollbar">
               <ReactQuill
                 theme="snow"
                 value={receiptMessage}
                 onChange={setReceiptMessage}
                 modules={modules}
                 formats={formats}
-                className="bg-white min-h-[200px]"
+                className="bg-white h-[300px] sm:h-[400px]"
                 placeholder="Enter your receipt message here..."
               />
             </div>
-            <DialogFooter className="mt-16"> {/* Increased margin-top to accommodate toolbar */}
+            <DialogFooter className="mt-4 border-t pt-4">
               <Button 
                 onClick={handleAddReceiptMessage} 
                 disabled={isMessageSubmitting || !receiptMessage.trim()}
