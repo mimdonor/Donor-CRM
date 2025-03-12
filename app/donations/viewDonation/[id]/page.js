@@ -99,7 +99,7 @@ Phone: ${org.phone}
   return (
     <div className="container mx-auto py-8 max-w-2xl">
       <Card className="p-8 relative overflow-hidden">
-      <div className={`flex justify-between items-center mb-6 p-4 rounded-lg ${organization.name === 'Mission India Movement' ? 'bg-[#30D5C8]' : 'bg-[#6CDAE7]'}`}>
+      <div className="flex justify-between items-center mb-6 p-4 bg-gray-100 rounded-lg">
           <div className="w-1/4">
             <Image
               src={organization.image_url}
@@ -109,7 +109,7 @@ Phone: ${org.phone}
             />
           </div>
           <div className="w-1/2 text-center">
-            <h1 className="text-lg text-[#E22226] font-bold">
+            <h1 className={`text-lg font-bold ${organization.name === 'Mission India Movement' ? 'text-[#30D5C8]' : 'text-[#6CDAE7]'}`}>
               {organization.name}
             </h1>
             <p className="text-sm whitespace-pre-line">{formatAddress(organization)}</p>
@@ -159,7 +159,7 @@ Phone: ${org.phone}
           </div>
         </div> */}
 
-        <div className={`p-4 text-center  ${organization.name === 'Mission India Movement' ? 'bg-[#30D5C8]' : 'bg-[#6CDAE7]'}`}>
+        <div className="bg-gray-100 p-4 text-center">
         <p 
       className="text-sm italic mt-2"
       dangerouslySetInnerHTML={{ __html: receiptData.message }}
