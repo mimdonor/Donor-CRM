@@ -4,7 +4,10 @@ import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Card } from "@/components/ui/card";
 import Image from 'next/image';
-import { Separator } from "@/components/ui/separator";
+import SeeshanHeader from "@/public/assets/SeeshanHeader.png";
+import MimHeader from "@/public/assets/MIMHeader.png";
+import SeeshanFooter from "@/public/assets/SeeshanFooter.png";
+import MimFooter from "@/public/assets/MIMFooter.png";
 
 export default function DonationView() {
   const { id } = useParams();
@@ -98,23 +101,17 @@ Phone: ${org.phone}
 
   return (
     <div className="container mx-auto py-8 max-w-2xl">
-      <Card className="p-8 relative overflow-hidden">
-      <div className="flex justify-between items-center mb-6 p-4 bg-gray-100 rounded-lg">
-          <div className="w-1/4">
-            <Image
-              src={organization.image_url}
-              alt={`${organization.name} Logo`}
-              width={80}
-              height={80}
-            />
-          </div>
-          <div className="w-1/2 text-center">
-            <h1 className={`text-lg font-bold ${organization.name === 'Mission India Movement' ? 'text-[#30D5C8]' : 'text-[#6CDAE7]'}`}>
-              {organization.name}
-            </h1>
-            <p className="text-sm whitespace-pre-line">{formatAddress(organization)}</p>
-          </div>
-          <div className="w-1/4 text-right">
+      <Card className="relative overflow-hidden">
+        <div className="w-full">
+          <Image
+            src={organization.name === "Seeshan" ? SeeshanHeader : MimHeader}
+            alt={`${organization.name} Header`}
+            sizes="100vw"
+            className="w-full h-28"
+          />
+        </div>
+        <div className="p-8">
+          <div className="w-1/4 text-left">
             <p className="text-sm">
               <strong>Receipt No:</strong> {donation.receipt_no}
             </p>
@@ -122,49 +119,66 @@ Phone: ${org.phone}
               <strong>Date:</strong> {formatDate(donation.date)}
             </p>
           </div>
-        </div>
 
-        <h2 className="text-2xl font-bold text-center mb-6 text-green-600">
-          Receipt
-        </h2>
+          {/* <h2 className="text-2xl font-bold text-center mb-6 text-green-600">
+            Receipt
+ </div>         </h2> */}
 
-        <div className="space-y-4 mb-6">
-          <div className="flex">
-            <p className="w-1/3"><strong>Received From:</strong></p>
-            <p className="w-2/3">{donation.donor?.institution_name ? donation.donor?.institution_name : donation.donor?.donor_name }</p>
+          <div className="space-y-4 my-6">
+            <div className="flex">
+              <p className="w-1/3"><strong>Received From:</strong></p>
+              <p className="w-2/3">{donation.donor?.institution_name ? donation.donor?.institution_name : donation.donor?.donor_name }</p>
+            </div>
+            <div className="flex">
+              <p className="w-1/3"><strong>Payment Method:</strong></p>
+              <p className="w-2/3">{donation.payment_type}</p>
+            </div>
+            <div className="flex">
+              <p className="w-1/3"><strong>Towards:</strong></p>
+              <p className="w-2/3">{donation.purpose}</p>
+            </div>
+            <div className="flex">
+              <p className="w-1/3"><strong>Amount:</strong></p>
+              <p className="w-2/3">Rs. {donation.amount.toFixed(2)}</p>
+            </div>
+            {/* <div className="flex">
+              <p className="w-1/3"><strong>Remarks:</strong></p>
+              <p className="w-2/3">{donation.remarks || 'N/A'}</p>
+            </div> */}
           </div>
-          <div className="flex">
-            <p className="w-1/3"><strong>Payment Method:</strong></p>
-            <p className="w-2/3">{donation.payment_type}</p>
-          </div>
-          <div className="flex">
-            <p className="w-1/3"><strong>Towards:</strong></p>
-            <p className="w-2/3">{donation.purpose}</p>
-          </div>
-          <div className="flex">
-            <p className="w-1/3"><strong>Amount:</strong></p>
-            <p className="w-2/3">Rs. {donation.amount.toFixed(2)}</p>
-          </div>
-          {/* <div className="flex">
-            <p className="w-1/3"><strong>Remarks:</strong></p>
-            <p className="w-2/3">{donation.remarks || 'N/A'}</p>
+
+          {/* <div className="flex justify-end mb-12">
+            <div className="w-1/3">
+              <div className="border-t border-black pt-2">
+                <p className="text-center">Authorized Signature</p>
+              </div>
+            </div>
           </div> */}
-        </div>
 
-        {/* <div className="flex justify-end mb-12">
-          <div className="w-1/3">
-            <div className="border-t border-black pt-2">
-              <p className="text-center">Authorized Signature</p>
+          <div className="flex justify-end -mr-16 -mb-10">
+            <div className="w-56">
+              <p className="text-[10px] text-gray-600 text-left">
+                Signature is not required<br />
+                as the document is to be digitally signed
+              </p>
             </div>
           </div>
-        </div> */}
-
-        <div className="bg-gray-100 p-4 text-center">
-        <p 
-      className="text-sm italic mt-2"
-      dangerouslySetInnerHTML={{ __html: receiptData.message }}
-    />
+          
         </div>
+        <div className="w-full">
+          <Image
+            src={organization.name === "Seeshan" ? SeeshanFooter : MimFooter}
+            alt={`${organization.name} Footer`}
+            sizes="100vw"
+            className="w-full h-28"
+          />
+        </div>
+        <div className="bg-gray-100 p-4 text-center">
+            <p 
+              className="text-sm italic mt-2"
+              dangerouslySetInnerHTML={{ __html: receiptData.message }}
+            />
+          </div>
       </Card>
     </div>
   );

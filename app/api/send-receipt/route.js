@@ -44,6 +44,33 @@ export async function POST(req) {
       args: ['--no-sandbox']
     });
     const page = await browser.newPage();
+    
+    // Set viewport and allow local file access
+    await page.setViewport({ width: 800, height: 1200 });
+    
+    // Get the absolute path to the static folder
+    const staticPath = join(process.cwd(), 'static');
+    
+    // Override the page's request handling to serve local files
+    await page.setRequestInterception(true);
+    page.on('request', async (request) => {
+      const url = request.url();
+      if (url.startsWith('file://')) {
+        const filePath = url.replace('file://', '');
+        try {
+          const content = readFileSync(filePath);
+          request.respond({
+            status: 200,
+            contentType: 'image/png',
+            body: content
+          });
+        } catch (error) {
+          request.abort();
+        }
+      } else {
+        request.continue();
+      }
+    });
 
     // Format dates and numbers in receiptData
     const formattedReceiptData = {
@@ -58,8 +85,12 @@ export async function POST(req) {
       }
     };
 
-    // Read and compile template
-    const templatePath = join(process.cwd(), 'templates', 'receipt.hbs');
+    // Read and compile template based on organization and message preference
+    const templateName = receiptData.organization.name === 'Seeshan' ? 
+      (receiptData.noCustomMessage ? 'seeshan-receipt-no-text.hbs' : 'seeshan-receipt.hbs') : 
+      (receiptData.noCustomMessage ? 'mim-receipt-no-text.hbs' : 'mim-receipt.hbs');
+    
+    const templatePath = join(process.cwd(), 'templates', templateName);
     const templateHtml = readFileSync(templatePath, 'utf-8');
     const template = handlebars.compile(templateHtml);
     const html = template(formattedReceiptData);
