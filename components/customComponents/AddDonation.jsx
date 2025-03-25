@@ -236,10 +236,11 @@ const AddDonation = ({ donationId }) => {
 
   const handleSearch = (value) => {
     setSearchTerm(value);
+    const searchValue = value.toLowerCase();
     const filtered = donors.filter((donor) =>
       searchBy === "name"
-        ? (donor.display_name || "").toLowerCase().includes(value.toLowerCase())
-        : donor.donor_number.toString().includes(value)
+        ? (donor.display_name || "").toLowerCase().startsWith(searchValue)
+        : donor.donor_number.toString().startsWith(value)
     );
     setFilteredDonors(filtered);
   };
