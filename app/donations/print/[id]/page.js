@@ -174,6 +174,7 @@ Phone: ${org.phone}
         );
     }
 
+    
     if (!donation || !organization) {
         return <div className="text-center">Donation or organization not found</div>;
     }
