@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from '@supabase/supabase-js';
-import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer';
 import handlebars from 'handlebars';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY,{
   db: {
-    schema: "next_auth",
+      schema: "next_auth",
   }
 });
 
@@ -39,27 +39,10 @@ export async function POST(req) {
     }
 
     // Generate PDF using template
-    let browser;
-    if (process.env.NODE_ENV === 'development') {
-      // Local development - use local Chrome
-      browser = await puppeteer.launch({
-        executablePath: process.platform === 'win32'
-          ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
-          : process.platform === 'darwin'
-          ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-          : '/usr/bin/google-chrome',
-        args: chromium.args,
-        headless: "new",
-      });
-    } else {
-      // Production - use chrome-aws-lambda
-      browser = await puppeteer.launch({
-        args: chromium.args,
-        executablePath: await chromium.executablePath(),
-        headless: chromium.headless,
-      });
-    }
-
+    const browser = await puppeteer.launch({ 
+      headless: 'new',
+      args: ['--no-sandbox']
+    });
     const page = await browser.newPage();
     
     // Set viewport and allow local file access
