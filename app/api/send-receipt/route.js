@@ -12,6 +12,7 @@ const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.
   }
 });
 
+
 // Add this before using the template
 handlebars.registerHelper('eq', function(a, b) {
   return a === b;
