@@ -164,10 +164,17 @@ export default function AddDonor({ donorId }) {
       setDonorNumber(data.donor_number);
       console.log('Fetched donor data:', data);
 
+      // Split the donor name correctly
+      const nameParts = data.donor_name.split(' ');
+      const salutation = nameParts[0];  // First part is salutation
+      const firstName = nameParts[1];    // Second part is first name
+      const lastName = nameParts.slice(2).join(' ');  // Rest is last name
+
       const formData = {
         donorNumber: data.donor_number,
-        firstName: data.donor_name.split(' ')[0],
-        lastName: data.donor_name.split(' ')[1] || '',
+        salutation: salutation,
+        firstName: firstName,
+        lastName: lastName,
         institutionName: data.institution_name,
         phone: data.phone,
         streetName: data.street_name,
@@ -182,7 +189,7 @@ export default function AddDonor({ donorId }) {
         donorZone: data.donor_zone,
         donorType: data.donor_type,
         category: data.category,
-        purposes: Array.isArray(data.purposes) ? data.purposes : data.purposes ? data.purposes.slice(1, -1).split(',') : [], // Parse Postgres array
+        purposes: Array.isArray(data.purposes) ? data.purposes : data.purposes ? data.purposes.slice(1, -1).split(',') : [],
         commitment: data.commitment,
         panNumber: data.pan_number,
         isMagazineSubscribed: data.is_magazine_subscribed,
@@ -254,8 +261,8 @@ export default function AddDonor({ donorId }) {
       street_name: data.streetName,
       area_name: data.areaName,
       landmark: data.landmark,
-      city: selectedCity.name,
-      state: selectedState.name,
+      city: selectedCity?.name || data.city, // Use existing city if no new selection
+      state: selectedState?.name || data.state, // Use existing state if no new selection
       country: selectedCountry.name,
       pincode: Number(data.pincode),
       donor_source: data.donorSource,
@@ -622,11 +629,10 @@ export default function AddDonor({ donorId }) {
                   {errors.country && <p className="text-red-500 text-sm">{errors.country.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <RequiredLabel htmlFor="state">State</RequiredLabel>
+                  <Label htmlFor="state">State</Label>
                   <Controller
                     name="state"
                     control={control}
-                    rules={{ required: "State is required" }}
                     render={({ field }) => (
                       <Select onValueChange={(value) => {
                         field.onChange(value);
@@ -643,14 +649,12 @@ export default function AddDonor({ donorId }) {
                       </Select>
                     )}
                   />
-                  {errors.state && <p className="text-red-500 text-sm">{errors.state.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <RequiredLabel htmlFor="city">City</RequiredLabel>
+                  <Label htmlFor="city">City</Label>
                   <Controller
                     name="city"
                     control={control}
-                    rules={{ required: "City is required" }}
                     render={({ field }) => (
                       <Select onValueChange={(value) => {
                         field.onChange(value);
@@ -667,7 +671,6 @@ export default function AddDonor({ donorId }) {
                       </Select>
                     )}
                   />
-                  {errors.city && <p className="text-red-500 text-sm">{errors.city.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="streetName">Street Name</Label>

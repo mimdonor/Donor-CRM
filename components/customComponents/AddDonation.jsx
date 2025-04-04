@@ -297,7 +297,7 @@ const AddDonation = ({ donationId }) => {
     }
 
     const donationData = {
-      donor_id: selectedDonor.donor_number, // Use donor_number for storage
+      donor_id: selectedDonor.donor_number,
       donor_name: selectedDonor.donor_type === 'Institution' 
         ? selectedDonor.institution_name 
         : selectedDonor.donor_name,
@@ -305,7 +305,7 @@ const AddDonation = ({ donationId }) => {
       payment_type: data.paymentType,
       amount: parseFloat(data.amount),
       receipt_no: lastReceiptNo,
-      ...(data.paymentType === 'Online' && data.transactionNumber ? 
+      ...((['Online', 'GPay'].includes(data.paymentType) && data.transactionNumber) ? 
         { transaction_number: Number(data.transactionNumber) } : {}),
       ...(data.paymentType === 'Cheque' && data.chequeNumber ? 
         { cheque_number: Number(data.chequeNumber) } : {}),
@@ -586,7 +586,7 @@ const AddDonation = ({ donationId }) => {
             {errors.amount && <p className="text-red-500">{errors.amount.message}</p>}
           </div>
 
-          {paymentType === "Online" && (
+          {(paymentType === "Online" || paymentType === "GPay") && (
             <div>
               <Label htmlFor="transactionNumber">Transaction Number</Label>
               <Input
