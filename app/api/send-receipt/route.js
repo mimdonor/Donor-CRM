@@ -1,25 +1,18 @@
 import { NextResponse } from "next/server";
 import { createClient } from '@supabase/supabase-js';
-import nodeHtmlToImage from 'node-html-to-image';
 import handlebars from 'handlebars';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-  db: {
-    schema: "next_auth",
-  }
+  db: { schema: "next_auth" }
 });
 
-// Add this before using the template
-handlebars.registerHelper('eq', function(a, b) {
-  return a === b;
-});
+handlebars.registerHelper('eq', (a, b) => a === b);
 
 export async function POST(req) {
   try {
     const { donorId, receiptData } = await req.json();
-    console.log('Received donorId:', donorId);
 
     const { data: donor, error: donorError } = await supabase
       .from('donors')
@@ -27,16 +20,10 @@ export async function POST(req) {
       .eq('donor_number', donorId)
       .single();
 
-    if (donorError) {
-      console.error('Donor fetch error:', donorError);
-      throw new Error('Failed to fetch donor details');
+    if (donorError || !donor?.phone) {
+      throw new Error('Failed to fetch donor phone number');
     }
 
-    if (!donor?.phone) {
-      throw new Error('Donor phone number not found');
-    }
-
-    // Format dates and numbers in receiptData
     const formattedReceiptData = {
       ...receiptData,
       donation: {
@@ -49,45 +36,52 @@ export async function POST(req) {
       }
     };
 
-    // Read and compile template based on organization and message preference
-    const templateName = receiptData.organization.name === 'Seeshan' ? 
-      (receiptData.noCustomMessage ? 'seeshan-receipt-no-text.hbs' : 'seeshan-receipt.hbs') : 
+    const templateName = receiptData.organization.name === 'Seeshan' ?
+      (receiptData.noCustomMessage ? 'seeshan-receipt-no-text.hbs' : 'seeshan-receipt.hbs') :
       (receiptData.noCustomMessage ? 'mim-receipt-no-text.hbs' : 'mim-receipt.hbs');
-    
+
     const templatePath = join(process.cwd(), 'templates', templateName);
     const templateHtml = readFileSync(templatePath, 'utf-8');
     const template = handlebars.compile(templateHtml);
     const html = template(formattedReceiptData);
 
-    // Generate image from HTML
-    const image = await nodeHtmlToImage({
-      html: html,
-      quality: 100,
-      type: 'jpeg',
-      puppeteerArgs: {
-        args: ['--no-sandbox']
-      }
+    // ✅ Generate PDF using Browserless
+    const browserlessPDFResponse = await fetch(`https://chrome.browserless.io/pdf?token=${process.env.BROWSERLESS_TOKEN}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        html,
+        options: {
+          printBackground: true,
+          margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' },
+          format: 'A4'
+        }
+      })
     });
 
-    // Upload image to Supabase storage
-    const fileName = `receipt_${Date.now()}.jpg`;
+    if (!browserlessPDFResponse.ok) {
+      throw new Error('PDF generation failed from Browserless');
+    }
+
+    const pdf = await browserlessPDFResponse.arrayBuffer();
+
+    const fileName = `receipt_${Date.now()}.pdf`;
     const filePath = `receipts/${fileName}`;
-    
+
     const { error: uploadError } = await supabase.storage
       .from('Donor')
-      .upload(filePath, image, {
-        contentType: 'image/jpeg',
+      .upload(filePath, Buffer.from(pdf), {
+        contentType: 'application/pdf',
         cacheControl: '3600'
       });
 
     if (uploadError) throw uploadError;
 
-    // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from('Donor')
       .getPublicUrl(filePath);
 
-    // Send WhatsApp message
+    // ✅ Send WhatsApp message
     const messageData = new URLSearchParams({
       appkey: process.env.WHATSAPP_APP_KEY,
       authkey: 'jSvVJO1Lp3u07oDKDESCrDxyBoV7LSZ0UrMCT5t642H15j9YNX',
@@ -106,18 +100,13 @@ export async function POST(req) {
       throw new Error('Failed to send WhatsApp message');
     }
 
-    // Cleanup: Delete image from storage
+    // ✅ Optional cleanup
     await supabase.storage.from('Donor').remove([filePath]);
 
-    return NextResponse.json({ 
-      message: "Receipt sent successfully" 
-    });
+    return NextResponse.json({ message: "Receipt sent successfully" });
 
   } catch (error) {
     console.error("Error:", error);
-    return NextResponse.json(
-      { message: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
