@@ -310,16 +310,12 @@ const Donations = () => {
     );
   }
 
-  const fetchData = async ({ pageIndex, pageSize }) => {
+  const fetchData = async () => {
     setIsLoading(true);
-    const startRange = pageIndex * pageSize;
-    const endRange = startRange + pageSize - 1;
-
     try {
       const { data, error, count } = await supabase
         .from('donations')
         .select('*', { count: 'exact' })
-        .range(startRange, endRange)
         .order('date', { ascending: false });
 
       if (error) throw error;
