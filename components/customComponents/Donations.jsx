@@ -254,6 +254,7 @@ const Donations = () => {
   const columns = [
     {header: 'Donor ID', accessorKey: 'donor_id'},
     {header: 'Donor Name', accessorKey: 'donor_name'},
+    {header: "Organization", accessorKey: 'organization'},
     {header: 'Date', accessorKey: 'date'},
     {header: 'Payment Type', accessorKey: 'payment_type'},
     {header: 'Amount', accessorKey: 'amount'},

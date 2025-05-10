@@ -7,7 +7,7 @@ import Image from "next/image";
 import SeeshanHeader from "@/public/assets/SeeshanHeader.png";
 import MimHeader from "@/public/assets/MIMHeader.png";
 import SeeshanFooter from "@/public/assets/SeeshanFooter.png";
-import MimFooter from "@/public/assets/MIMFooter.png";
+import MimFooter from "@/public/assets/MimFooter.png";
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from 'react-hot-toast';
 
@@ -212,8 +212,8 @@ Phone: ${org.phone}
               <p className="w-2/3">{donation.donor?.institution_name ? donation.donor?.institution_name : donation.donor?.donor_name }</p>
             </div>
             <div className="flex">
-              <p className="w-1/3"><strong>Payment Method:</strong></p>
-              <p className="w-2/3">{donation.payment_type}</p>
+              <p className="w-1/3"><strong>City:</strong></p>
+              <p className="w-2/3">{donation.donor?.city}</p>
             </div>
             <div className="flex">
               <p className="w-1/3"><strong>Towards:</strong></p>

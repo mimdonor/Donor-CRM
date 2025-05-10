@@ -130,8 +130,8 @@ Phone: ${org.phone}
               <p className="w-2/3">{donation.donor?.institution_name ? donation.donor?.institution_name : donation.donor?.donor_name }</p>
             </div>
             <div className="flex">
-              <p className="w-1/3"><strong>Payment Method:</strong></p>
-              <p className="w-2/3">{donation.payment_type}</p>
+              <p className="w-1/3"><strong>City:</strong></p>
+              <p className="w-2/3">{donation.donor?.city}</p>
             </div>
             <div className="flex">
               <p className="w-1/3"><strong>Towards:</strong></p>

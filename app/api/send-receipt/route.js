@@ -83,7 +83,7 @@ export async function POST(req) {
 
     // ✅ Send WhatsApp message
     const messageData = new URLSearchParams({
-      appkey: process.env.WHATSAPP_APP_KEY,
+      appkey: '291b8520-641a-4120-99de-4b60fa3b5383',
       authkey: 'jSvVJO1Lp3u07oDKDESCrDxyBoV7LSZ0UrMCT5t642H15j9YNX',
       to: donor.phone,
       message: 'Thank you for your contribution!',
