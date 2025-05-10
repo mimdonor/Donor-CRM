@@ -7,7 +7,7 @@ import Image from "next/image";
 import SeeshanHeader from "@/public/assets/SeeshanHeader.png";
 import MimHeader from "@/public/assets/MIMHeader.png";
 import SeeshanFooter from "@/public/assets/SeeshanFooter.png";
-import MimFooter from "@/public/assets/MimFooter.png";
+import MimFooter from "@/public/assets/MIMFooter.png";
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from 'react-hot-toast';
 
