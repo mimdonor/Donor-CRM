@@ -306,7 +306,7 @@ const AddDonation = ({ donationId }) => {
       amount: parseFloat(data.amount),
       receipt_no: lastReceiptNo,
       ...((['Online', 'GPay'].includes(data.paymentType) && data.transactionNumber) ? 
-        { transaction_number: Number(data.transactionNumber) } : {}),
+        { transaction_number: data.transactionNumber } : {}),
       ...(data.paymentType === 'Cheque' && data.chequeNumber ? 
         { cheque_number: Number(data.chequeNumber) } : {}),
       purpose: data.purposes,
