@@ -188,27 +188,6 @@ const Page = () => {
             <Card className="mt-4">
                 <CardContent className="space-y-4 pt-4">
                     <div className="flex flex-col gap-4">
-                        <div className="flex flex-wrap gap-4">
-                            <div className="flex items-center gap-2">
-                                <span>From:</span>
-                                <DatePicker
-                                    placeholder="Start Date"
-                                    value={filters.startDate}
-                                    onChange={(date) => handleDateChange('start', date)}
-                                    maxDate={filters.endDate || new Date()}
-                                />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span>To:</span>
-                                <DatePicker
-                                    placeholder="End Date"
-                                    value={filters.endDate}
-                                    onChange={(date) => handleDateChange('end', date)}
-                                    minDate={filters.startDate}
-                                    maxDate={new Date()}
-                                />
-                            </div>
-                        </div>
                         {dateError && <p className="text-red-500">{dateError}</p>}
                         <div className="flex flex-wrap gap-4">
                             <Input
@@ -274,6 +253,8 @@ const Page = () => {
                         isLoading={isLoading}
                         searchText="Search donors..."
                         searchColumn="donor_name"
+                        isExportButton={true}
+
                         isPagination={true}  // This will show all rows but still allow sorting and filtering
                     />
                 </CardContent>

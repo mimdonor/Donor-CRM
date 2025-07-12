@@ -151,13 +151,7 @@ export default function PaginatedTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[40px]">
-                <Checkbox
-                  checked={table.getIsAllPageRowsSelected()}
-                  onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                  aria-label="Select all"
-                />
-              </TableHead>
+              
               {table.getHeaderGroups()[0].headers.map((header) => (
                 <TableHead key={header.id}>
                   {header.isPlaceholder
@@ -177,13 +171,7 @@ export default function PaginatedTable({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                 >
-                  <TableCell className="w-[40px]">
-                    <Checkbox
-                      checked={row.getIsSelected()}
-                      onCheckedChange={(value) => row.toggleSelected(!!value)}
-                      aria-label="Select row"
-                    />
-                  </TableCell>
+                 
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

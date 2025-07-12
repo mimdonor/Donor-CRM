@@ -43,7 +43,7 @@ const Page = () => {
 
     const { permissions, user } = usePermissions();
     const reportsPermissions = permissions?.reportsModule || {};
-    const donorPermissions = permissions?.donorModule || {}; // Add this line
+    const donorPermissions = permissions?.donorModule || {};
 
     const router = useRouter();
 

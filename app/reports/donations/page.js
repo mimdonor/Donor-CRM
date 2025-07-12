@@ -23,7 +23,7 @@ const Page = () => {
     const [donations, setDonations] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
-    const [bankOptions, setBankOptions] = useState([]); // Add this state
+    const [bankOptions, setBankOptions] = useState([]);
 
     // Add this function to fetch bank names
     const fetchBankNames = async () => {
@@ -308,6 +308,8 @@ const Page = () => {
                         isLoading={isLoading}
                         searchText="Search donations..."
                         searchColumn="donor_name"
+                        isExportButton={true}
+
                         // isColumnButton={true}
                     />
                 </CardContent>
