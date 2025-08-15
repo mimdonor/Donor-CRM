@@ -317,7 +317,7 @@ const Donations = () => {
       const { data, error, count } = await supabase
         .from('donations')
         .select('*', { count: 'exact' })
-        .order('date', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
