@@ -10,34 +10,61 @@ Font.register({
   src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-light-webfont.ttf'
 });
 
+// Replace static styles with computed sizes for A4 and requested margins/gaps
+const CM_TO_PT = 28.3464567; // 1 cm in PDF points
+const TOP_BOTTOM_CM = 1.2;
+const LEFT_RIGHT_CM = 0.5;
+const COL_GAP_CM = 0.3;
+
+const topBottom = TOP_BOTTOM_CM * CM_TO_PT; // ~34.02pt
+const leftRight = LEFT_RIGHT_CM * CM_TO_PT; // ~14.17pt
+const colGap = COL_GAP_CM * CM_TO_PT; // ~8.50pt
+
+const A4 = { width: 595.28, height: 841.89 }; // pts (approx)
+const innerWidth = A4.width - leftRight * 2;
+const totalColGaps = colGap * 2; // two gaps between three columns
+const colWidth = (innerWidth - totalColGaps) / 3;
+const rowHeight = (A4.height - topBottom * 2) / 8; // 8 rows per page
+
 const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
     backgroundColor: '#ffffff',
-    padding: 10,
+    paddingTop: topBottom,
+    paddingBottom: topBottom,
+    paddingLeft: leftRight,
+    paddingRight: leftRight,
     fontFamily: 'Roboto',
   },
-  table: {
-    display: 'table',
-    width: 'auto',
-    borderStyle: 'solid',
-    borderWidth: 1,
-    borderRightWidth: 0,
-    borderBottomWidth: 0,
+  rowsContainer: {
+    flexDirection: 'column',
   },
-  tableRow: {
-    margin: 'auto',
+  row: {
     flexDirection: 'row',
+    height: rowHeight,
+    marginBottom: 0, // no vertical gaps between rows
+    padding: 0, // ensure no extra padding
+    alignItems: 'stretch',
   },
-  tableCol: {
-    width: '33.33%',
-    borderStyle: 'solid',
-    borderWidth: 1,
-    borderLeftWidth: 0,
-    borderTopWidth: 0,
+  col: {
+    width: colWidth,
+    marginRight: colGap,
+    padding: 0,
   },
-  tableCell: {
-    margin: 5,
+  colLast: {
+    marginRight: 0,
+  },
+  sticker: {
+    flex: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+    padding: 6,
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 0.5,
+    borderColor: '#000000',
+  },
+  stickerText: {
     fontSize: 10,
   },
 });
@@ -100,34 +127,49 @@ const PrintPage = () => {
     }, []);
 
     const formatAddress = (donor) => {
+        if (!donor) return '';
         return `${donor.institution_name ? donor.institution_name : donor.donor_name}
-    ${donor.street_name}, ${donor.area_name}
-    ${donor.landmark ? donor.landmark + ', ' : ''}${donor.city}
-    ${donor.state}, ${donor.country} - ${donor.pincode}`;
+${donor.street_name ? donor.street_name + ', ' : ''}${donor.area_name || ''}
+${donor.landmark ? donor.landmark + ', ' : ''}${donor.city || ''}
+${donor.state || ''}${donor.country ? ', ' + donor.country : ''}${donor.pincode ? ' - ' + donor.pincode : ''}`.trim();
     };
+
+    const chunk = (arr, size) =>
+        Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
+            arr.slice(i * size, i * size + size)
+        );
 
     const AddressDocument = ({ addresses }) => (
         <Document>
-            {chunk(addresses, 21).map((pageAddresses, pageIndex) => (
-                <Page key={pageIndex} size="A4" style={styles.page}>
-                    <View style={styles.table}>
-                        {chunk(pageAddresses, 3).map((rowAddresses, rowIndex) => (
-                            <View key={rowIndex} style={styles.tableRow}>
-                                {rowAddresses.map((donor, cellIndex) => (
-                                    <View key={cellIndex} style={styles.tableCol}>
-                                        <Text style={styles.tableCell}>{formatAddress(donor)}</Text>
-                                    </View>
-                                ))}
-                                {rowAddresses.length < 3 && Array(3 - rowAddresses.length).fill().map((_, i) => (
-                                    <View key={`empty-${i}`} style={styles.tableCol}>
-                                        <Text style={styles.tableCell}></Text>
-                                    </View>
-                                ))}
-                            </View>
-                        ))}
-                    </View>
-                </Page>
-            ))}
+            {chunk(addresses, 24).map((pageAddresses, pageIndex) => {
+                // Ensure exactly 24 slots per page (8 rows x 3 cols)
+                const padded = Array.from({ length: 24 }, (_, i) => pageAddresses[i] || null);
+                const rows = chunk(padded, 3); // 8 rows
+                return (
+                    // use the exact A4 point dimensions calculated above for precise layout
+                    <Page key={pageIndex} size={[A4.width, A4.height]} style={styles.page}>
+                        <View style={styles.rowsContainer}>
+                            {rows.map((rowAddresses, rowIndex) => (
+                                <View key={rowIndex} style={styles.row}>
+                                    {rowAddresses.map((donor, cellIndex) => {
+                                        const isLast = cellIndex === 2;
+                                        return (
+                                            <View
+                                                key={cellIndex}
+                                                style={[styles.col, isLast && styles.colLast]}
+                                            >
+                                                <View style={styles.sticker}>
+                                                    <Text style={styles.stickerText}>{formatAddress(donor)}</Text>
+                                                </View>
+                                            </View>
+                                        );
+                                    })}
+                                </View>
+                            ))}
+                        </View>
+                    </Page>
+                );
+            })}
         </Document>
     );
 
@@ -136,12 +178,6 @@ const PrintPage = () => {
         const url = URL.createObjectURL(blob);
         window.open(url, '_blank');
     };
-
-    // Utility function to chunk array into smaller arrays
-    const chunk = (arr, size) =>
-        Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
-            arr.slice(i * size, i * size + size)
-        );
 
     return (
         <div className="text-gray-800 flex items-center justify-center h-screen">
