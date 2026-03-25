@@ -54,6 +54,7 @@ export async function POST(req) {
   const {
     donor_id, donor_name, date, amount, payment_type, purpose,
     transaction_number, cheque_number,
+    organization, bank_name,
     // Payment gateway (optional — populated when using Razorpay QR)
     payment_gateway_provider, payment_id, payment_order_id,
     payment_qr_id, payment_status,
@@ -62,6 +63,8 @@ export async function POST(req) {
   const record = {
     donor_id, donor_name, date, amount: parseFloat(amount), payment_type,
     purpose, receipt_no,
+    organization:       organization       ?? null,
+    bank_name:          bank_name          ?? null,
     transaction_number: transaction_number ?? null,
     cheque_number:      cheque_number ? parseInt(cheque_number) : null,
     // Gateway fields — stored as-is; null when not provided

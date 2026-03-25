@@ -10,7 +10,7 @@ export async function GET(req) {
   const auth = await verifyMobileToken(req);
   if (!auth.ok) return NextResponse.json({ success: false, message: auth.error }, { status: 401 });
 
-  const [purposes, sources, zones, representatives, salutations, organizations, banks] = await Promise.all([
+  const [purposes, sources, zones, representatives, salutations, organizations, banks, lastDonation] = await Promise.all([
     supabase.from("purposes_dropdown").select("*"),
     supabase.from("donorsource_dropdown").select("*"),
     supabase.from("donorzone_dropdown").select("*"),
@@ -18,7 +18,10 @@ export async function GET(req) {
     supabase.from("salutation_dropdown").select("*"),
     supabase.from("organization_settings").select("*"),
     supabase.from("bank_details").select("*"),
+    supabase.from("donations").select("receipt_no").order("receipt_no", { ascending: false }).limit(1).maybeSingle(),
   ]);
+
+  const nextReceiptNo = (lastDonation.data?.receipt_no ?? 0) + 1;
 
   return NextResponse.json({
     success: true,
@@ -30,6 +33,7 @@ export async function GET(req) {
       salutations: salutations.data ?? [],
       organizations: organizations.data ?? [],
       banks: banks.data ?? [],
+      nextReceiptNo,
     },
   }, { headers: corsHeaders() });
 }
