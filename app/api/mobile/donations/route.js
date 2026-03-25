@@ -50,9 +50,31 @@ export async function POST(req) {
 
   const receipt_no = (lastDonation?.receipt_no ?? 0) + 1;
 
+  // Destructure to keep gateway fields explicit
+  const {
+    donor_id, donor_name, date, amount, payment_type, purpose,
+    transaction_number, cheque_number,
+    // Payment gateway (optional — populated when using Razorpay QR)
+    payment_gateway_provider, payment_id, payment_order_id,
+    payment_qr_id, payment_status,
+  } = body;
+
+  const record = {
+    donor_id, donor_name, date, amount: parseFloat(amount), payment_type,
+    purpose, receipt_no,
+    transaction_number: transaction_number ?? null,
+    cheque_number:      cheque_number ? parseInt(cheque_number) : null,
+    // Gateway fields — stored as-is; null when not provided
+    payment_gateway_provider: payment_gateway_provider ?? null,
+    payment_id:               payment_id               ?? null,
+    payment_order_id:         payment_order_id         ?? null,
+    payment_qr_id:            payment_qr_id            ?? null,
+    payment_status:           payment_status           ?? null,
+  };
+
   const { data, error } = await supabase
     .from("donations")
-    .insert({ ...body, receipt_no })
+    .insert(record)
     .select()
     .single();
 
