@@ -57,7 +57,7 @@ export async function POST(req) {
     organization, bank_name,
     // Payment gateway (optional — populated when using Razorpay QR)
     payment_gateway_provider, payment_id, payment_order_id,
-    payment_qr_id, payment_status,
+    payment_qr_id, payment_status,created_by
   } = body;
 
   const record = {
@@ -73,6 +73,7 @@ export async function POST(req) {
     payment_order_id:         payment_order_id         ?? null,
     payment_qr_id:            payment_qr_id            ?? null,
     payment_status:           payment_status           ?? null,
+    created_by:               created_by               ?? null
   };
 
   const { data, error } = await supabase

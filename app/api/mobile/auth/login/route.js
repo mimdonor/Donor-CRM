@@ -16,16 +16,17 @@ import jwt from "jsonwebtoken";
 
 export async function POST(req) {
     try {
-        const { email, password } = await req.json();
+        // allow phone or email
+        const { identifier, password } = await req.json();
 
-        if (!email || !password) {
-             return NextResponse.json({ success: false, message: "Missing email or password" }, { status: 400 });
+        if (!identifier || !password) {
+             return NextResponse.json({ success: false, message: "Missing identifier or password" }, { status: 400 });
         }
 
         const { data: user, error } = await supabase
             .from('users')
             .select('*')
-            .eq('email', email)
+            .or(`email.eq.${identifier},phone.eq.${identifier}`)
             .single();
 
         if (error || !user) {
