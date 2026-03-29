@@ -17,6 +17,7 @@ export async function GET(req) {
   const paymentType = searchParams.get("paymentType") ?? "";
   const dateFrom = searchParams.get("dateFrom") ?? "";
   const dateTo = searchParams.get("dateTo") ?? "";
+  const createdBy = searchParams.get("created_by") ?? "";
   const from = (page - 1) * pageSize;
 
   let query = supabase.from("donations").select("*", { count: "exact" });
@@ -25,6 +26,7 @@ export async function GET(req) {
   if (paymentType) query = query.eq("payment_type", paymentType);
   if (dateFrom) query = query.gte("date", dateFrom);
   if (dateTo) query = query.lte("date", dateTo);
+  if (createdBy) query = query.eq("created_by", createdBy);
 
   const { data, error, count } = await query
     .order("date", { ascending: false })
